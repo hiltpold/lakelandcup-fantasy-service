@@ -1,0 +1,85 @@
+syntax = "proto3";
+
+package fantasy;
+
+option go_package = "./service/pb";
+
+import "google/protobuf/timestamp.proto";
+
+service FantasyService {
+  rpc CreateLeague(LeagueRequest) returns (LeagueResponse) {}
+  rpc CreateFranchise(FranchiseRequest) returns (FranchiseResponse) {}
+  rpc GetLeagueById(GetLeagueByIdRequest) returns (QueryResponse) {}
+  rpc GetFranchiseById(GetFranchiseByIdRequest) returns (QueryResponse) {}
+}
+
+/*
+    Lakelandcup
+*/
+
+message League {
+	string ID = 1;
+    string UserID = 2;
+    string LeagueName = 4;
+    string FoundationYear = 5;
+    repeated Franchise Franchises = 6;
+    google.protobuf.Timestamp CreatedAt = 7;
+    google.protobuf.Timestamp UpdatedAt =8;
+}
+
+message Franchise {
+	string ID = 1;
+    string FranchiseName = 2;
+    string FoundationYear = 3;
+    string LeagueID = 4;
+    google.protobuf.Timestamp CreatedAt = 5;
+    google.protobuf.Timestamp UpdatedAt =6;
+}
+
+
+// Query Response
+
+message QueryResponse {
+    int64 status = 1;
+    string error = 2;
+    string result  = 3;
+}
+  
+// Create League
+
+message LeagueRequest {
+  string userId = 1;
+  string leagueName = 2;
+  string foundationYear = 3;
+}
+
+message LeagueResponse {
+  int64 status = 1;
+  string error = 2;
+  string leagueId = 3;
+}
+
+// Get League 
+
+message GetLeagueByIdRequest {
+    string leagueId = 1;
+}
+  
+// Franchise
+
+message FranchiseRequest {
+  string leagueId = 1;
+  string franchiseName = 2;
+  string foundationYear = 3;
+}
+
+message FranchiseResponse {
+  int64 status = 1;
+  string error = 2;
+  string franchiseId = 3;
+}
+
+message GetFranchiseByIdRequest {
+    string franchiseId = 1;
+}
+  
