@@ -68,7 +68,7 @@ func Dial(c *conf.PostgresConfiguration) Repository {
 	}
 
 	// migrate table
-	appDb.AutoMigrate(&models.League{}, &models.Franchise{})
+	appDb.AutoMigrate(&models.League{}, &models.Franchise{}, &models.Prospect{})
 
 	return Repository{appDb}
 }

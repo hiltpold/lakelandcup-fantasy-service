@@ -8,10 +8,11 @@ import (
 )
 
 type Franchise struct {
-	ID             uuid.UUID `json:"id" gorm:"primaryKey"`
-	FranchiseName  string    `json:"franchiseName" gorm:"type:string"`
-	FoundationYear string    `json:"foundationYear" gorm:"type:string"`
-	LeagueID       uuid.UUID `json:"leagueId" gorm:"foreignKey:FranchiseID"`
+	ID             uuid.UUID  `json:"id" gorm:"primaryKey"`
+	FranchiseName  string     `json:"franchiseName" gorm:"type:string"`
+	FoundationYear string     `json:"foundationYear" gorm:"type:string"`
+	LeagueID       uuid.UUID  `json:"leagueId" gorm:"foreignKey:FranchiseID"`
+	Prospects      []Prospect `json:"prospects" gorm:"foreignKey:FranchiseID"`
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 }

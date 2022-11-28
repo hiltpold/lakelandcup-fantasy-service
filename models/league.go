@@ -13,6 +13,7 @@ type League struct {
 	LeagueName     string      `json:"leagueName" gorm:"type:string"`
 	FoundationYear string      `json:"foundationYear" gorm:"type:string"`
 	Franchises     []Franchise `json:"franchises" gorm:"foreignKey:LeagueID"`
+	Prospects      []Prospect  `json:"prospects" gorm:"foreignKey:LeagueID"`
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 }
