@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -51,44 +50,29 @@ func (s *Server) CreateLeague(ctx context.Context, req *pb.LeagueRequest) (*pb.L
 	}, nil
 }
 
-func (s *Server) GetAllLeaguesForUser(ctx context.Context, req *pb.GetAllLeaguesForUserRequest) (*pb.LeagueResultResponse, error) {
+func (s *Server) GetLeagueFranchisePairs(ctx context.Context, req *pb.GetLeagueFranchiseRequest) (*pb.LeagueFranchisePairResponse, error) {
 	var leagues []models.League
-	var leagueRes []*pb.League
-	var franchisesRes []*pb.Franchise
+	var res []*pb.LeagueFranchisePair
 
 	s.R.DB.Preload("Franchises").Find(&leagues)
-	log.Printf("LOG %v", leagues)
+
 	for _, l := range leagues {
-		tmpFranchise := pb.Franchise{}
 		if len(l.Franchises) > 0 {
 			for _, f := range l.Franchises {
 				if f.FranchiseOwner.String() == req.UserId {
-					tmpFranchise.ID = f.ID.String()
-					tmpFranchise.FranchisOwner = f.FranchiseOwner.String()
-					tmpFranchise.FranchiseName = f.FranchiseName
-					tmpFranchise.FoundationYear = f.FoundationYear
-					franchisesRes = append(franchisesRes, &tmpFranchise)
-
+					res = append(res, &pb.LeagueFranchisePair{LeagueID: f.LeagueID.String(), FranchiseID: f.ID.String()})
 				}
 			}
 		} else {
-			franchisesRes = append(franchisesRes, &pb.Franchise{})
-		}
-		if l.LeagueFounder.String() == req.UserId || len(l.Franchises) > 0 {
-			tmpLeague := pb.League{
-				ID:             l.ID.String(),
-				LeagueFounder:  l.LeagueFounder.String(),
-				LeagueName:     l.LeagueName,
-				FoundationYear: l.FoundationYear,
-				MaxFranchises:  int32(l.MaxFranchises),
-				Franchises:     franchisesRes,
+			if l.LeagueFounder.String() == req.UserId {
+				res = append(res, &pb.LeagueFranchisePair{LeagueID: l.ID.String(), FranchiseID: ""})
 			}
-			leagueRes = append(leagueRes, &tmpLeague)
 		}
 	}
-	return &pb.LeagueResultResponse{
-		Status: http.StatusCreated,
-		Result: leagueRes,
+
+	return &pb.LeagueFranchisePairResponse{
+		Status: http.StatusAccepted,
+		Result: res,
 	}, nil
 }
 

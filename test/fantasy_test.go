@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/http"
 	"os"
 	"testing"
 
@@ -37,11 +38,12 @@ const foundationYear = "2022"
 const maxFranchises = 1
 const userId2 = "11111111-1111-1111-1111-111111111111"
 const leagueName2 = "TestLeague2"
-const maxFranchises2 = 2
+const maxFranchises2 = 3
 
 const franchiseName = "TestFranchise"
 const franchiseFoundationYear = "2022"
 const franchiseName2 = "TestFranchise2"
+const franchiseName3 = "TestFranchise3"
 
 func bufDialer(context.Context, string) (net.Conn, error) {
 	return lis.Dial()
@@ -251,49 +253,122 @@ func TestFranchiseCreation(t *testing.T) {
 
 }
 
-func TestGetLeaguesForUser(t *testing.T) {
-
-	// create league 1
-	createLeagueReq := pb.LeagueRequest{UserId: userId, LeagueName: leagueName, FoundationYear: foundationYear, MaxFranchises: int32(maxFranchises)}
-	createLeagueResp, err := client.CreateLeague(ctx, &createLeagueReq)
-	if err != nil {
-		t.Fatalf("League creation failed: %v", err)
+func TestGetLeagueFranchisePairs(t *testing.T) {
+	// Create League 1
+	lResp, lErr := createLeague(userId, leagueName, foundationYear, maxFranchises2)
+	if lErr != nil {
+		t.Errorf("League creation failed: %v", lErr)
 	}
-	log.Printf("Create League 1 Response: %+v", createLeagueResp)
 
-	// create league 2
-	createLeagueReq2 := pb.LeagueRequest{UserId: userId2, LeagueName: leagueName2, FoundationYear: foundationYear, MaxFranchises: int32(maxFranchises)}
-	createLeagueResp2, err2 := client.CreateLeague(ctx, &createLeagueReq2)
-	if err2 != nil {
-		t.Fatalf("League creation failed: %v", err)
-	}
-	log.Printf("Create League 2 Response: %+v", createLeagueResp2)
+	// Log result
+	t.Log("-----------------------")
+	t.Log("Create League Response:")
+	t.Logf("%+v", lResp)
+	t.Log("-----------------------")
 
-	// create franchise 1 in league 1
-	franchiseReq := pb.FranchiseRequest{FranchiseOwner: userId, FranchiseName: franchiseName, FoundationYear: franchiseFoundationYear, LeagueId: createLeagueResp.LeagueId}
-	franchiseResp, err := client.CreateFranchise(ctx, &franchiseReq)
-	if err != nil {
-		t.Fatalf("Create Franchise 1 failed: %v", err)
+	// Create league 2
+	lResp2, lErr2 := createLeague(userId2, leagueName2, foundationYear, maxFranchises2)
+	if lErr2 != nil {
+		t.Errorf("League creation failed: %v", lErr2)
 	}
-	log.Printf("Franchise 1 response:\n%v", franchiseResp)
-	// create franchise 1 in league 1
 
-	// generate franchise test request
-	franchiseReq2 := pb.FranchiseRequest{FranchiseOwner: userId2, FranchiseName: franchiseName2, FoundationYear: franchiseFoundationYear, LeagueId: createLeagueResp.LeagueId}
-	franchiseResp2, err := client.CreateFranchise(ctx, &franchiseReq2)
-	if err != nil {
-		t.Fatalf("Create Franchise 2 failed: %v", err)
-	}
-	log.Printf("Franchise 2 response:\n%v", franchiseResp2)
+	// Log result
+	t.Log("-----------------------")
+	t.Log("Create League Response:")
+	t.Logf("%+v", lResp2)
+	t.Log("-----------------------")
 
-	// get leagues for user 1
-	getLeaguesForUserReq := pb.GetAllLeaguesForUserRequest{UserId: userId}
-	getLeaguesForUserRes, err := client.GetAllLeaguesForUser(ctx, &getLeaguesForUserReq)
-	if err != nil {
-		t.Fatalf("Get all leagues failed: %v", err)
+	// Create franchise 1 in league 1
+	fResp, fErr := createFranchise(lResp.LeagueId, userId, franchiseName, franchiseFoundationYear)
+	if fErr != nil {
+		t.Errorf("League creation failed: %v", fErr)
 	}
-	//res := proto.MarshalTextString(getLeaguesForUserRes)
-	log.Printf("Get Leagues Response: %v", getLeaguesForUserRes.Result)
+
+	// Log result
+	t.Log("----------------------------")
+	t.Log("Create Franchise 1 Response:")
+	t.Logf("%+v", fResp)
+	t.Log("----------------------------")
+
+	// Create franchise 2 in league 1
+	fResp2, fErr2 := createFranchise(lResp.LeagueId, userId2, franchiseName2, franchiseFoundationYear)
+	if fErr2 != nil {
+		t.Errorf("League creation failed: %v", fErr2)
+	}
+
+	// Log result
+	t.Log("----------------------------")
+	t.Log("Create Franchise 2 Response:")
+	t.Logf("%+v", fResp2)
+	t.Log("----------------------------")
+
+	// Get leagues for user 1
+	getLeaguesForUserReq := pb.GetLeagueFranchiseRequest{UserId: userId}
+	result1, lfErr1 := client.GetLeagueFranchisePairs(ctx, &getLeaguesForUserReq)
+	if lfErr1 != nil {
+		t.Fatalf("Get all leagues failed: %v", lfErr1)
+	}
+	log.Printf("Get Leagues Response: %v", result1.Result)
+
+	// Test franchise
+	if result1.Status != http.StatusAccepted {
+		t.Errorf("Http Status %d not equal to expected status %d", result1.Status, http.StatusAccepted)
+	}
+	actualLeagueId1 := result1.Result[0].LeagueID
+	actualFranchiseId1 := result1.Result[0].FranchiseID
+
+	if actualLeagueId1 != lResp.LeagueId {
+		t.Errorf("LeagueId %q not equal to expected %q", actualLeagueId1, lResp.LeagueId)
+	}
+
+	if actualFranchiseId1 != fResp.FranchiseId {
+		t.Errorf("FranchiseId %q not equal to expected %q", actualFranchiseId1, fResp.FranchiseId)
+	}
+
+	// Create franchise 3 in league 1
+	fResp3, fErr3 := createFranchise(lResp.LeagueId, userId, franchiseName3, franchiseFoundationYear)
+	if fErr3 != nil {
+		t.Errorf("League creation failed: %v", fErr3)
+	}
+
+	// Log result
+	t.Log("----------------------------")
+	t.Log("Create Franchise 2 Response:")
+	t.Logf("%+v", fResp3)
+	t.Log("----------------------------")
+
+	// Get leagues for user 1
+	result2, lfErr2 := client.GetLeagueFranchisePairs(ctx, &getLeaguesForUserReq)
+	if lfErr2 != nil {
+		t.Fatalf("Get all leagues failed: %v", lfErr2)
+	}
+	t.Log("---------------------------------------------")
+	log.Printf("Get Leagues Response: %v", result2.Result)
+	t.Log("---------------------------------------------")
+
+	// Get leagues for user 2
+	getLeaguesForUserReq2 := pb.GetLeagueFranchiseRequest{UserId: userId2}
+	result3, lfErr3 := client.GetLeagueFranchisePairs(ctx, &getLeaguesForUserReq2)
+	if lfErr2 != nil {
+		t.Fatalf("Get all leagues failed: %v", lfErr3)
+	}
+	t.Log("---------------------------------------------")
+	log.Printf("Get Leagues Response: %v", result3.Result)
+	t.Log("---------------------------------------------")
+
+	if result3.Status != http.StatusAccepted {
+		t.Errorf("Http Status %d not equal to expected status %d", result3.Status, http.StatusAccepted)
+	}
+	actualLeagueId3 := result3.Result[1].LeagueID
+	actualFranchiseId3 := result3.Result[1].FranchiseID
+
+	if actualLeagueId3 != lResp2.LeagueId {
+		t.Errorf("LeagueId %q not equal to expected %q", actualLeagueId3, lResp2.LeagueId)
+	}
+
+	if actualFranchiseId3 != "" {
+		t.Errorf("FranchiseId %q not equal to expected %q", actualFranchiseId3, "")
+	}
 
 	// Clean up
 	db.Where("franchise_owner = ?", userId).Delete(&models.Franchise{})

@@ -6,7 +6,7 @@ option go_package = "./service/pb";
 
 service FantasyService {
   rpc CreateLeague(LeagueRequest) returns (LeagueResponse) {}
-  rpc GetAllLeaguesForUser(GetAllLeaguesForUserRequest) returns (LeagueResultResponse) {}
+  rpc GetLeagueFranchisePairs(GetLeagueFranchiseRequest) returns (LeagueFranchisePairResponse) {}
   rpc CreateFranchise(FranchiseRequest) returns (FranchiseResponse) {}
 }
 
@@ -49,21 +49,27 @@ message LeagueRequest {
   int32 maxFranchises = 4;
 }
 
+message GetLeagueFranchiseRequest {
+    string userId = 2;
+}
+
 message LeagueResponse {
   int64 status = 1;
   string error = 2;
   string leagueId = 3;
 }
 
-message LeagueResultResponse {
-    int64 status = 1;
-    string error = 2;
-    repeated League result  = 3;
+message LeagueFranchisePair {
+    string LeagueID = 1;
+    string FranchiseID = 2;
 }
 
-message GetAllLeaguesForUserRequest {
-    string userId = 2;
+message LeagueFranchisePairResponse {
+    int64 status = 1;
+    string error = 2;
+    repeated LeagueFranchisePair result  = 3;
 }
+
 
  
 // Franchise
