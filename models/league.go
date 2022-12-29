@@ -9,11 +9,11 @@ import (
 
 type League struct {
 	ID             uuid.UUID   `json:"leagueId" gorm:"primaryKey"`
-	UserID         string      `json:"userId" gorm:"type:uuid"`
-	LeagueName     string      `json:"leagueName" gorm:"type:string"`
-	FoundationYear string      `json:"foundationYear" gorm:"type:string"`
+	LeagueFounder  uuid.UUID   `json:"userId" gorm:"not null;type:uuid"`
+	LeagueName     string      `json:"leagueName" gorm:"not null;type:string"`
+	FoundationYear string      `json:"foundationYear" gorm:"not null;type:string"`
+	MaxFranchises  int         `json:"maxFranchise" gorm:"not null;maxFranchises:int"`
 	Franchises     []Franchise `json:"franchises" gorm:"foreignKey:LeagueID"`
-	Prospects      []Prospect  `json:"prospects" gorm:"foreignKey:LeagueID"`
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 }

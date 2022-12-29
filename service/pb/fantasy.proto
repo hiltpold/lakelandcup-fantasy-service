@@ -4,13 +4,10 @@ package fantasy;
 
 option go_package = "./service/pb";
 
-import "google/protobuf/timestamp.proto";
-
 service FantasyService {
   rpc CreateLeague(LeagueRequest) returns (LeagueResponse) {}
+  rpc GetAllLeaguesForUser(GetAllLeaguesForUserRequest) returns (LeagueResultResponse) {}
   rpc CreateFranchise(FranchiseRequest) returns (FranchiseResponse) {}
-  rpc GetLeagueById(GetLeagueByIdRequest) returns (QueryResponse) {}
-  rpc GetFranchiseById(GetFranchiseByIdRequest) returns (QueryResponse) {}
 }
 
 /*
@@ -19,21 +16,19 @@ service FantasyService {
 
 message League {
 	string ID = 1;
-    string UserID = 2;
-    string LeagueName = 4;
-    string FoundationYear = 5;
+    string LeagueFounder = 2;
+    string LeagueName = 3;
+    string FoundationYear = 4;
+    int32 MaxFranchises = 5;
     repeated Franchise Franchises = 6;
-    google.protobuf.Timestamp CreatedAt = 7;
-    google.protobuf.Timestamp UpdatedAt =8;
 }
 
 message Franchise {
 	string ID = 1;
-    string FranchiseName = 2;
-    string FoundationYear = 3;
-    string LeagueID = 4;
-    google.protobuf.Timestamp CreatedAt = 5;
-    google.protobuf.Timestamp UpdatedAt =6;
+    string FranchisOwner = 2;
+    string FranchiseName = 3;
+    string FoundationYear = 4;
+    string LeagueID = 5;
 }
 
 
@@ -45,12 +40,13 @@ message QueryResponse {
     string result  = 3;
 }
   
-// Create League
+// League
 
 message LeagueRequest {
   string userId = 1;
   string leagueName = 2;
   string foundationYear = 3;
+  int32 maxFranchises = 4;
 }
 
 message LeagueResponse {
@@ -59,18 +55,24 @@ message LeagueResponse {
   string leagueId = 3;
 }
 
-// Get League 
-
-message GetLeagueByIdRequest {
-    string leagueId = 1;
+message LeagueResultResponse {
+    int64 status = 1;
+    string error = 2;
+    repeated League result  = 3;
 }
-  
+
+message GetAllLeaguesForUserRequest {
+    string userId = 2;
+}
+
+ 
 // Franchise
 
 message FranchiseRequest {
   string leagueId = 1;
-  string franchiseName = 2;
-  string foundationYear = 3;
+  string franchiseOwner = 2;
+  string franchiseName = 3;
+  string foundationYear = 4;
 }
 
 message FranchiseResponse {
@@ -79,7 +81,4 @@ message FranchiseResponse {
   string franchiseId = 3;
 }
 
-message GetFranchiseByIdRequest {
-    string franchiseId = 1;
-}
-  
+// Prospects
