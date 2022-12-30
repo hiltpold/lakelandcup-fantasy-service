@@ -50,7 +50,7 @@ func (s *Server) CreateLeague(ctx context.Context, req *pb.LeagueRequest) (*pb.L
 	}, nil
 }
 
-func (s *Server) GetLeagueFranchisePairs(ctx context.Context, req *pb.GetLeagueFranchiseRequest) (*pb.LeagueFranchisePairResponse, error) {
+func (s *Server) GetLeagueFranchisePairs(ctx context.Context, req *pb.GetLeagueFranchisePairsRequest) (*pb.GetLeagueFranchisePairsResponse, error) {
 	var leagues []models.League
 	var res []*pb.LeagueFranchisePair
 
@@ -70,10 +70,100 @@ func (s *Server) GetLeagueFranchisePairs(ctx context.Context, req *pb.GetLeagueF
 		}
 	}
 
-	return &pb.LeagueFranchisePairResponse{
+	return &pb.GetLeagueFranchisePairsResponse{
 		Status: http.StatusAccepted,
 		Result: res,
 	}, nil
+}
+
+func (s *Server) GetLeague(ctx context.Context, req *pb.GetLeagueRequest) (*pb.GetLeagueResponse, error) {
+	var league models.League
+	var leagueRes *pb.League
+	var franchisesRes []*pb.Franchise
+
+	findLeague := s.R.DB.Preload("Franchises").First(&league, "id = ?", req.LeagueId)
+
+	if findLeague.Error != nil {
+		return &pb.GetLeagueResponse{
+			Status: http.StatusConflict,
+			Error:  fmt.Sprintf("Getting leagueId (%s) failed", req.LeagueId),
+		}, nil
+	}
+
+	if findLeague.RowsAffected == 0 {
+		return &pb.GetLeagueResponse{
+			Status: http.StatusConflict,
+			Error:  fmt.Sprintf("leagueId (%s) does not exist", req.LeagueId),
+		}, nil
+
+	}
+
+	tmpFranchise := pb.Franchise{}
+	if len(league.Franchises) > 0 {
+		for _, f := range league.Franchises {
+			tmpFranchise.ID = f.ID.String()
+			tmpFranchise.FranchisOwner = f.FranchiseOwner.String()
+			tmpFranchise.FranchiseName = f.FranchiseName
+			tmpFranchise.FoundationYear = f.FoundationYear
+			franchisesRes = append(franchisesRes, &tmpFranchise)
+
+		}
+	} else {
+		franchisesRes = append(franchisesRes, &pb.Franchise{})
+	}
+	leagueRes = &pb.League{
+		ID:             league.ID.String(),
+		LeagueFounder:  league.LeagueFounder.String(),
+		LeagueName:     league.LeagueName,
+		FoundationYear: league.FoundationYear,
+		MaxFranchises:  int32(league.MaxFranchises),
+		Franchises:     franchisesRes,
+	}
+
+	return &pb.GetLeagueResponse{
+		Status: http.StatusAccepted,
+		Result: leagueRes,
+	}, nil
+
+}
+
+func (s *Server) GetLeagues(ctx context.Context, req *pb.GetLeaguesRequest) (*pb.GetLeaguesResponse, error) {
+	var leagues []models.League
+	var leagueRes []*pb.League
+	var franchisesRes []*pb.Franchise
+
+	s.R.DB.Preload("Franchises").Find(&leagues).Limit(1000)
+
+	for _, l := range leagues {
+		tmpFranchise := pb.Franchise{}
+		if len(l.Franchises) > 0 {
+			for _, f := range l.Franchises {
+				tmpFranchise.ID = f.ID.String()
+				tmpFranchise.FranchisOwner = f.FranchiseOwner.String()
+				tmpFranchise.FranchiseName = f.FranchiseName
+				tmpFranchise.FoundationYear = f.FoundationYear
+				franchisesRes = append(franchisesRes, &tmpFranchise)
+
+			}
+		} else {
+			franchisesRes = append(franchisesRes, &pb.Franchise{})
+		}
+		tmpLeague := pb.League{
+			ID:             l.ID.String(),
+			LeagueFounder:  l.LeagueFounder.String(),
+			LeagueName:     l.LeagueName,
+			FoundationYear: l.FoundationYear,
+			MaxFranchises:  int32(l.MaxFranchises),
+			Franchises:     franchisesRes,
+		}
+		leagueRes = append(leagueRes, &tmpLeague)
+	}
+
+	return &pb.GetLeaguesResponse{
+		Status: http.StatusAccepted,
+		Result: leagueRes,
+	}, nil
+
 }
 
 func (s *Server) CreateFranchise(ctx context.Context, req *pb.FranchiseRequest) (*pb.FranchiseResponse, error) {

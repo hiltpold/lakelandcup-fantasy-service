@@ -23,7 +23,9 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type FantasyServiceClient interface {
 	CreateLeague(ctx context.Context, in *LeagueRequest, opts ...grpc.CallOption) (*LeagueResponse, error)
-	GetLeagueFranchisePairs(ctx context.Context, in *GetLeagueFranchiseRequest, opts ...grpc.CallOption) (*LeagueFranchisePairResponse, error)
+	GetLeagues(ctx context.Context, in *GetLeaguesRequest, opts ...grpc.CallOption) (*GetLeaguesResponse, error)
+	GetLeague(ctx context.Context, in *GetLeagueRequest, opts ...grpc.CallOption) (*GetLeagueResponse, error)
+	GetLeagueFranchisePairs(ctx context.Context, in *GetLeagueFranchisePairsRequest, opts ...grpc.CallOption) (*GetLeagueFranchisePairsResponse, error)
 	CreateFranchise(ctx context.Context, in *FranchiseRequest, opts ...grpc.CallOption) (*FranchiseResponse, error)
 }
 
@@ -44,8 +46,26 @@ func (c *fantasyServiceClient) CreateLeague(ctx context.Context, in *LeagueReque
 	return out, nil
 }
 
-func (c *fantasyServiceClient) GetLeagueFranchisePairs(ctx context.Context, in *GetLeagueFranchiseRequest, opts ...grpc.CallOption) (*LeagueFranchisePairResponse, error) {
-	out := new(LeagueFranchisePairResponse)
+func (c *fantasyServiceClient) GetLeagues(ctx context.Context, in *GetLeaguesRequest, opts ...grpc.CallOption) (*GetLeaguesResponse, error) {
+	out := new(GetLeaguesResponse)
+	err := c.cc.Invoke(ctx, "/fantasy.FantasyService/GetLeagues", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fantasyServiceClient) GetLeague(ctx context.Context, in *GetLeagueRequest, opts ...grpc.CallOption) (*GetLeagueResponse, error) {
+	out := new(GetLeagueResponse)
+	err := c.cc.Invoke(ctx, "/fantasy.FantasyService/GetLeague", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fantasyServiceClient) GetLeagueFranchisePairs(ctx context.Context, in *GetLeagueFranchisePairsRequest, opts ...grpc.CallOption) (*GetLeagueFranchisePairsResponse, error) {
+	out := new(GetLeagueFranchisePairsResponse)
 	err := c.cc.Invoke(ctx, "/fantasy.FantasyService/GetLeagueFranchisePairs", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -67,7 +87,9 @@ func (c *fantasyServiceClient) CreateFranchise(ctx context.Context, in *Franchis
 // for forward compatibility
 type FantasyServiceServer interface {
 	CreateLeague(context.Context, *LeagueRequest) (*LeagueResponse, error)
-	GetLeagueFranchisePairs(context.Context, *GetLeagueFranchiseRequest) (*LeagueFranchisePairResponse, error)
+	GetLeagues(context.Context, *GetLeaguesRequest) (*GetLeaguesResponse, error)
+	GetLeague(context.Context, *GetLeagueRequest) (*GetLeagueResponse, error)
+	GetLeagueFranchisePairs(context.Context, *GetLeagueFranchisePairsRequest) (*GetLeagueFranchisePairsResponse, error)
 	CreateFranchise(context.Context, *FranchiseRequest) (*FranchiseResponse, error)
 	mustEmbedUnimplementedFantasyServiceServer()
 }
@@ -79,7 +101,13 @@ type UnimplementedFantasyServiceServer struct {
 func (UnimplementedFantasyServiceServer) CreateLeague(context.Context, *LeagueRequest) (*LeagueResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateLeague not implemented")
 }
-func (UnimplementedFantasyServiceServer) GetLeagueFranchisePairs(context.Context, *GetLeagueFranchiseRequest) (*LeagueFranchisePairResponse, error) {
+func (UnimplementedFantasyServiceServer) GetLeagues(context.Context, *GetLeaguesRequest) (*GetLeaguesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetLeagues not implemented")
+}
+func (UnimplementedFantasyServiceServer) GetLeague(context.Context, *GetLeagueRequest) (*GetLeagueResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetLeague not implemented")
+}
+func (UnimplementedFantasyServiceServer) GetLeagueFranchisePairs(context.Context, *GetLeagueFranchisePairsRequest) (*GetLeagueFranchisePairsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetLeagueFranchisePairs not implemented")
 }
 func (UnimplementedFantasyServiceServer) CreateFranchise(context.Context, *FranchiseRequest) (*FranchiseResponse, error) {
@@ -116,8 +144,44 @@ func _FantasyService_CreateLeague_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FantasyService_GetLeagues_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetLeaguesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FantasyServiceServer).GetLeagues(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/fantasy.FantasyService/GetLeagues",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FantasyServiceServer).GetLeagues(ctx, req.(*GetLeaguesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FantasyService_GetLeague_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetLeagueRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FantasyServiceServer).GetLeague(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/fantasy.FantasyService/GetLeague",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FantasyServiceServer).GetLeague(ctx, req.(*GetLeagueRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _FantasyService_GetLeagueFranchisePairs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetLeagueFranchiseRequest)
+	in := new(GetLeagueFranchisePairsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -129,7 +193,7 @@ func _FantasyService_GetLeagueFranchisePairs_Handler(srv interface{}, ctx contex
 		FullMethod: "/fantasy.FantasyService/GetLeagueFranchisePairs",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FantasyServiceServer).GetLeagueFranchisePairs(ctx, req.(*GetLeagueFranchiseRequest))
+		return srv.(FantasyServiceServer).GetLeagueFranchisePairs(ctx, req.(*GetLeagueFranchisePairsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -162,6 +226,14 @@ var FantasyService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateLeague",
 			Handler:    _FantasyService_CreateLeague_Handler,
+		},
+		{
+			MethodName: "GetLeagues",
+			Handler:    _FantasyService_GetLeagues_Handler,
+		},
+		{
+			MethodName: "GetLeague",
+			Handler:    _FantasyService_GetLeague_Handler,
 		},
 		{
 			MethodName: "GetLeagueFranchisePairs",

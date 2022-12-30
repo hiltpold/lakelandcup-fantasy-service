@@ -253,6 +253,53 @@ func TestFranchiseCreation(t *testing.T) {
 
 }
 
+func TestGetLeague(t *testing.T) {
+	// Create League 1
+	lResp, lErr := createLeague(userId, leagueName, foundationYear, maxFranchises)
+	if lErr != nil {
+		t.Errorf("League creation failed: %v", lErr)
+	}
+
+	// Log result
+	t.Log("-----------------------")
+	t.Log("Create League 1 Response:")
+	t.Logf("%+v", lResp)
+	t.Log("-----------------------")
+
+	// Create Franchise 1
+	fResp, fErr := createFranchise(lResp.LeagueId, userId, franchiseName, franchiseFoundationYear)
+	if fErr != nil {
+		t.Errorf("League creation failed: %v", fErr)
+	}
+
+	// Log result
+	t.Log("----------------------------")
+	t.Log("Create Franchise 1 Response:")
+	t.Logf("%+v", fResp)
+	t.Log("----------------------------")
+
+	getLeagueReq := pb.GetLeagueRequest{LeagueId: lResp.LeagueId}
+	resp, err := client.GetLeague(ctx, &getLeagueReq)
+	if err != nil {
+		t.Fatalf("Get league failed: %v", err)
+	}
+	t.Log("---------------------------------------------")
+	log.Printf("Get League Response: %v", resp)
+	t.Log("---------------------------------------------")
+
+	// TODO: Better test
+	if resp.Status != http.StatusAccepted {
+		t.Errorf("Http Status %d not equal to expected status %d", resp.Status, http.StatusAccepted)
+	}
+
+	if resp.Result.ID != lResp.LeagueId {
+		t.Errorf("Output %q not equal to expected %q", resp.Result.ID, lResp.LeagueId)
+	}
+
+	db.Where("franchise_owner = ?", userId).Delete(&models.Franchise{})
+	db.Where("league_founder = ?", userId).Delete(&models.League{})
+}
+
 func TestGetLeagueFranchisePairs(t *testing.T) {
 	// Create League 1
 	lResp, lErr := createLeague(userId, leagueName, foundationYear, maxFranchises2)
@@ -303,7 +350,7 @@ func TestGetLeagueFranchisePairs(t *testing.T) {
 	t.Log("----------------------------")
 
 	// Get leagues for user 1
-	getLeaguesForUserReq := pb.GetLeagueFranchiseRequest{UserId: userId}
+	getLeaguesForUserReq := pb.GetLeagueFranchisePairsRequest{UserId: userId}
 	result1, lfErr1 := client.GetLeagueFranchisePairs(ctx, &getLeaguesForUserReq)
 	if lfErr1 != nil {
 		t.Fatalf("Get all leagues failed: %v", lfErr1)
@@ -347,7 +394,7 @@ func TestGetLeagueFranchisePairs(t *testing.T) {
 	t.Log("---------------------------------------------")
 
 	// Get leagues for user 2
-	getLeaguesForUserReq2 := pb.GetLeagueFranchiseRequest{UserId: userId2}
+	getLeaguesForUserReq2 := pb.GetLeagueFranchisePairsRequest{UserId: userId2}
 	result3, lfErr3 := client.GetLeagueFranchisePairs(ctx, &getLeaguesForUserReq2)
 	if lfErr2 != nil {
 		t.Fatalf("Get all leagues failed: %v", lfErr3)
