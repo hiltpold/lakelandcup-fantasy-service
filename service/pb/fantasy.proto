@@ -10,6 +10,7 @@ service FantasyService {
   rpc GetLeague(GetLeagueRequest) returns (GetLeagueResponse) {}
   rpc GetLeagueFranchisePairs(GetLeagueFranchisePairsRequest) returns (GetLeagueFranchisePairsResponse) {}
   rpc CreateFranchise(FranchiseRequest) returns (FranchiseResponse) {}
+  rpc GetFranchise(GetFranchiseRequest) returns (GetFranchiseResponse) {}
 }
 
 /*
@@ -31,8 +32,26 @@ message Franchise {
     string FranchiseName = 3;
     string FoundationYear = 4;
     string LeagueID = 5;
+    repeated Prospect Prospects = 6;
 }
 
+message Prospect {
+	string ID = 1;
+    string FullName = 2;
+    string FirstName= 3;
+    string LastName= 4;
+    string FranchiseID = 5;
+    Pick pick = 6;
+}
+
+message Pick {
+	string ID = 1;
+    string DraftYear = 2;
+    string DraftRound= 3;
+    string DraftPickOverall= 4;
+    string DraftPickInRound = 5;
+    string ProspectID = 6;
+}
 
 // Query Response
 
@@ -44,6 +63,7 @@ message QueryResponse {
   
 // League
 
+// create
 message LeagueRequest {
   string userId = 1;
   string leagueName = 2;
@@ -57,6 +77,7 @@ message LeagueResponse {
   string leagueId = 3;
 }
 
+// get all leagues
 message GetLeaguesRequest{
 }
 
@@ -66,7 +87,7 @@ message GetLeaguesResponse {
   repeated League result = 3;
 }
 
-
+// get single league
 message GetLeagueRequest{
     string leagueId = 1;
 }
@@ -77,6 +98,7 @@ message GetLeagueResponse {
   League result = 3;
 }
 
+// get all leagues an associated franchises
 message GetLeagueFranchisePairsRequest {
     string userId = 2;
 }
@@ -94,6 +116,7 @@ message GetLeagueFranchisePairsResponse {
 
 // Franchise
 
+// create franchise
 message FranchiseRequest {
   string leagueId = 1;
   string franchiseOwner = 2;
@@ -107,4 +130,17 @@ message FranchiseResponse {
   string franchiseId = 3;
 }
 
+// get single league
+message GetFranchiseRequest{
+    string franchiseId = 1;
+}
+
+message GetFranchiseResponse {
+  int64 status = 1;
+  string error = 2;
+  Franchise result = 3;
+}
+
 // Prospects
+
+// Picks

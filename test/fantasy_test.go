@@ -424,3 +424,50 @@ func TestGetLeagueFranchisePairs(t *testing.T) {
 	db.Where("league_founder = ?", userId2).Delete(&models.League{})
 
 }
+
+func TestGetFranchise(t *testing.T) {
+	// Create League 1
+	lResp, lErr := createLeague(userId, leagueName, foundationYear, maxFranchises)
+	if lErr != nil {
+		t.Errorf("League creation failed: %v", lErr)
+	}
+
+	// Log result
+	t.Log("-----------------------")
+	t.Log("Create League 1 Response:")
+	t.Logf("%+v", lResp)
+	t.Log("-----------------------")
+
+	// Create Franchise 1
+	fResp, fErr := createFranchise(lResp.LeagueId, userId, franchiseName, franchiseFoundationYear)
+	if fErr != nil {
+		t.Errorf("League creation failed: %v", fErr)
+	}
+
+	// Log result
+	t.Log("----------------------------")
+	t.Log("Create Franchise 1 Response:")
+	t.Logf("%+v", fResp)
+	t.Log("----------------------------")
+
+	getFranchiseReq := pb.GetFranchiseRequest{FranchiseId: fResp.FranchiseId}
+	resp, err := client.GetFranchise(ctx, &getFranchiseReq)
+	if err != nil {
+		t.Fatalf("Get league failed: %v", err)
+	}
+	t.Log("---------------------------------------------")
+	log.Printf("Get Franchise Response: %v", resp)
+	t.Log("---------------------------------------------")
+
+	// TODO: Better tests
+	if resp.Status != http.StatusAccepted {
+		t.Errorf("Http Status %d not equal to expected status %d", resp.Status, http.StatusAccepted)
+	}
+
+	if resp.Result.ID != fResp.FranchiseId {
+		t.Errorf("Output %q not equal to expected %q", resp.Result.ID, fResp.FranchiseId)
+	}
+
+	db.Where("franchise_owner = ?", userId).Delete(&models.Franchise{})
+	db.Where("league_founder = ?", userId).Delete(&models.League{})
+}

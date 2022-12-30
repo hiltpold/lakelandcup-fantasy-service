@@ -211,3 +211,52 @@ func (s *Server) CreateFranchise(ctx context.Context, req *pb.FranchiseRequest) 
 		FranchiseId: franchise.ID.String(),
 	}, nil
 }
+
+func (s *Server) GetFranchise(ctx context.Context, req *pb.GetFranchiseRequest) (*pb.GetFranchiseResponse, error) {
+	var franchise models.Franchise
+	var franchiseRes *pb.Franchise
+	var prospectRes []*pb.Prospect
+
+	findFranchise := s.R.DB.Preload("Prospects").First(&franchise, "id = ?", req.FranchiseId)
+
+	if findFranchise.Error != nil {
+		return &pb.GetFranchiseResponse{
+			Status: http.StatusConflict,
+			Error:  fmt.Sprintf("Getting franchiseId (%s) failed: %v", req.FranchiseId, findFranchise.Error),
+		}, nil
+	}
+
+	if findFranchise.RowsAffected == 0 {
+		return &pb.GetFranchiseResponse{
+			Status: http.StatusConflict,
+			Error:  fmt.Sprintf("franchiseId (%s) does not exist", req.FranchiseId),
+		}, nil
+
+	}
+
+	tmpProspect := pb.Prospect{}
+	if len(franchise.Prospects) > 0 {
+		for _, p := range franchise.Prospects {
+			tmpProspect.ID = p.ID.String()
+			tmpProspect.FullName = p.FullName
+			tmpProspect.FirstName = p.FirstName
+			tmpProspect.LastName = p.LastName
+			tmpProspect.FranchiseID = p.FranchiseID.String()
+		}
+	} else {
+		prospectRes = append(prospectRes, &pb.Prospect{})
+	}
+	franchiseRes = &pb.Franchise{
+		ID:             franchise.ID.String(),
+		FranchisOwner:  franchise.FranchiseOwner.String(),
+		FranchiseName:  franchise.FranchiseName,
+		FoundationYear: franchise.FoundationYear,
+		Prospects:      prospectRes,
+	}
+
+	return &pb.GetFranchiseResponse{
+		Status: http.StatusAccepted,
+		Result: franchiseRes,
+	}, nil
+
+}

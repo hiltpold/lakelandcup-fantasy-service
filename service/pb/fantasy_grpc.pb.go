@@ -27,6 +27,7 @@ type FantasyServiceClient interface {
 	GetLeague(ctx context.Context, in *GetLeagueRequest, opts ...grpc.CallOption) (*GetLeagueResponse, error)
 	GetLeagueFranchisePairs(ctx context.Context, in *GetLeagueFranchisePairsRequest, opts ...grpc.CallOption) (*GetLeagueFranchisePairsResponse, error)
 	CreateFranchise(ctx context.Context, in *FranchiseRequest, opts ...grpc.CallOption) (*FranchiseResponse, error)
+	GetFranchise(ctx context.Context, in *GetFranchiseRequest, opts ...grpc.CallOption) (*GetFranchiseResponse, error)
 }
 
 type fantasyServiceClient struct {
@@ -82,6 +83,15 @@ func (c *fantasyServiceClient) CreateFranchise(ctx context.Context, in *Franchis
 	return out, nil
 }
 
+func (c *fantasyServiceClient) GetFranchise(ctx context.Context, in *GetFranchiseRequest, opts ...grpc.CallOption) (*GetFranchiseResponse, error) {
+	out := new(GetFranchiseResponse)
+	err := c.cc.Invoke(ctx, "/fantasy.FantasyService/GetFranchise", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FantasyServiceServer is the server API for FantasyService service.
 // All implementations must embed UnimplementedFantasyServiceServer
 // for forward compatibility
@@ -91,6 +101,7 @@ type FantasyServiceServer interface {
 	GetLeague(context.Context, *GetLeagueRequest) (*GetLeagueResponse, error)
 	GetLeagueFranchisePairs(context.Context, *GetLeagueFranchisePairsRequest) (*GetLeagueFranchisePairsResponse, error)
 	CreateFranchise(context.Context, *FranchiseRequest) (*FranchiseResponse, error)
+	GetFranchise(context.Context, *GetFranchiseRequest) (*GetFranchiseResponse, error)
 	mustEmbedUnimplementedFantasyServiceServer()
 }
 
@@ -112,6 +123,9 @@ func (UnimplementedFantasyServiceServer) GetLeagueFranchisePairs(context.Context
 }
 func (UnimplementedFantasyServiceServer) CreateFranchise(context.Context, *FranchiseRequest) (*FranchiseResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateFranchise not implemented")
+}
+func (UnimplementedFantasyServiceServer) GetFranchise(context.Context, *GetFranchiseRequest) (*GetFranchiseResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFranchise not implemented")
 }
 func (UnimplementedFantasyServiceServer) mustEmbedUnimplementedFantasyServiceServer() {}
 
@@ -216,6 +230,24 @@ func _FantasyService_CreateFranchise_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FantasyService_GetFranchise_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetFranchiseRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FantasyServiceServer).GetFranchise(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/fantasy.FantasyService/GetFranchise",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FantasyServiceServer).GetFranchise(ctx, req.(*GetFranchiseRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // FantasyService_ServiceDesc is the grpc.ServiceDesc for FantasyService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -242,6 +274,10 @@ var FantasyService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateFranchise",
 			Handler:    _FantasyService_CreateFranchise_Handler,
+		},
+		{
+			MethodName: "GetFranchise",
+			Handler:    _FantasyService_GetFranchise_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
