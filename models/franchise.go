@@ -13,7 +13,7 @@ type Franchise struct {
 	FranchiseName  string     `json:"franchiseName" gorm:"not null;type:string"`
 	FoundationYear string     `json:"foundationYear" gorm:"not null;type:string"`
 	LeagueID       uuid.UUID  `json:"leagueId" gorm:"not null;foreignKey:FranchiseID"`
-	Prospects      []Prospect `json:"prospects" gorm:"not null;foreignKey:FranchiseID"`
+	Prospects      []Prospect `json:"prospects" gorm:"foreignKey:FranchiseID"`
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 }

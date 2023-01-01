@@ -104,6 +104,8 @@ func createFranchise(leagueId string, franchiseOwner string, franchiseName strin
 	return resp, err
 }
 
+// League
+
 func TestLeagueCreation(t *testing.T) {
 	resp, err := createLeague(userId, leagueName, foundationYear, maxFranchises)
 	if err != nil {
@@ -425,6 +427,8 @@ func TestGetLeagueFranchisePairs(t *testing.T) {
 
 }
 
+// Franchise
+
 func TestGetFranchise(t *testing.T) {
 	// Create League 1
 	lResp, lErr := createLeague(userId, leagueName, foundationYear, maxFranchises)
@@ -468,6 +472,67 @@ func TestGetFranchise(t *testing.T) {
 		t.Errorf("Output %q not equal to expected %q", resp.Result.ID, fResp.FranchiseId)
 	}
 
+	db.Where("franchise_owner = ?", userId).Delete(&models.Franchise{})
+	db.Where("league_founder = ?", userId).Delete(&models.League{})
+}
+
+// Prospects
+func TestCreateUndraftedProspects(t *testing.T) {
+	// Create League 1
+	lResp, lErr := createLeague(userId, leagueName, foundationYear, maxFranchises)
+	if lErr != nil {
+		t.Errorf("League creation failed: %v", lErr)
+	}
+
+	// Log result
+	t.Log("-----------------------")
+	t.Log("Create League 1 Response:")
+	t.Logf("%+v", lResp)
+	t.Log("-----------------------")
+
+	// Create Franchise 1
+	fResp, fErr := createFranchise(lResp.LeagueId, userId, franchiseName, franchiseFoundationYear)
+	if fErr != nil {
+		t.Errorf("League creation failed: %v", fErr)
+	}
+
+	// Log result
+	t.Log("----------------------------")
+	t.Log("Create Franchise 1 Response:")
+	t.Logf("%+v", fResp)
+	t.Log("----------------------------")
+
+	// Generate Undrafted Prospects
+
+	prospects := []*pb.Prospect{{FullName: "Max Muster", FirstName: "Max", LastName: "Muster", Birthdate: "2023-01-01"}, {FullName: "John Doe", FirstName: "Jon", LastName: "Doe", Birthdate: "2023-01-01"}}
+
+	createUndraftedProspectsReq := pb.CreateUndraftedProspectsRequest{Prospects: prospects}
+	resp, err := client.CreateUndraftedProspects(ctx, &createUndraftedProspectsReq)
+
+	if err != nil {
+		t.Fatalf("Create Undrafted Prospect Failed: %v", err)
+	}
+	t.Log("---------------------------------------------")
+	log.Printf("Create prospects Response: %v", resp)
+	t.Log("---------------------------------------------")
+
+	// Generate Drafted Prospects
+
+	p := pb.Prospect{FullName: "Max Muster", FirstName: "Max", LastName: "Muster", Birthdate: "2023-01-01", LeagueID: lResp.LeagueId, FranchiseID: fResp.FranchiseId}
+
+	createProspectReq := pb.CreateProspectRequest{Prospect: &p}
+	resp2, err2 := client.CreateProspect(ctx, &createProspectReq)
+
+	if err2 != nil {
+		t.Fatalf("Create Undrafted Prospect Failed: %v", err2)
+	}
+
+	t.Log("---------------------------------------------")
+	log.Printf("Create prospect Response: %v", resp2)
+	t.Log("---------------------------------------------")
+
+	db.Where("id IN (?)", resp.ProspectIds).Delete(&models.Prospect{})
+	db.Where("id = ?", resp2.ProspectID).Delete(&models.Prospect{})
 	db.Where("franchise_owner = ?", userId).Delete(&models.Franchise{})
 	db.Where("league_founder = ?", userId).Delete(&models.League{})
 }

@@ -28,6 +28,8 @@ type FantasyServiceClient interface {
 	GetLeagueFranchisePairs(ctx context.Context, in *GetLeagueFranchisePairsRequest, opts ...grpc.CallOption) (*GetLeagueFranchisePairsResponse, error)
 	CreateFranchise(ctx context.Context, in *FranchiseRequest, opts ...grpc.CallOption) (*FranchiseResponse, error)
 	GetFranchise(ctx context.Context, in *GetFranchiseRequest, opts ...grpc.CallOption) (*GetFranchiseResponse, error)
+	CreateUndraftedProspects(ctx context.Context, in *CreateUndraftedProspectsRequest, opts ...grpc.CallOption) (*CreateUndraftedProspectsResponse, error)
+	CreateProspect(ctx context.Context, in *CreateProspectRequest, opts ...grpc.CallOption) (*CreateProspectResponse, error)
 }
 
 type fantasyServiceClient struct {
@@ -92,6 +94,24 @@ func (c *fantasyServiceClient) GetFranchise(ctx context.Context, in *GetFranchis
 	return out, nil
 }
 
+func (c *fantasyServiceClient) CreateUndraftedProspects(ctx context.Context, in *CreateUndraftedProspectsRequest, opts ...grpc.CallOption) (*CreateUndraftedProspectsResponse, error) {
+	out := new(CreateUndraftedProspectsResponse)
+	err := c.cc.Invoke(ctx, "/fantasy.FantasyService/CreateUndraftedProspects", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fantasyServiceClient) CreateProspect(ctx context.Context, in *CreateProspectRequest, opts ...grpc.CallOption) (*CreateProspectResponse, error) {
+	out := new(CreateProspectResponse)
+	err := c.cc.Invoke(ctx, "/fantasy.FantasyService/CreateProspect", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FantasyServiceServer is the server API for FantasyService service.
 // All implementations must embed UnimplementedFantasyServiceServer
 // for forward compatibility
@@ -102,6 +122,8 @@ type FantasyServiceServer interface {
 	GetLeagueFranchisePairs(context.Context, *GetLeagueFranchisePairsRequest) (*GetLeagueFranchisePairsResponse, error)
 	CreateFranchise(context.Context, *FranchiseRequest) (*FranchiseResponse, error)
 	GetFranchise(context.Context, *GetFranchiseRequest) (*GetFranchiseResponse, error)
+	CreateUndraftedProspects(context.Context, *CreateUndraftedProspectsRequest) (*CreateUndraftedProspectsResponse, error)
+	CreateProspect(context.Context, *CreateProspectRequest) (*CreateProspectResponse, error)
 	mustEmbedUnimplementedFantasyServiceServer()
 }
 
@@ -126,6 +148,12 @@ func (UnimplementedFantasyServiceServer) CreateFranchise(context.Context, *Franc
 }
 func (UnimplementedFantasyServiceServer) GetFranchise(context.Context, *GetFranchiseRequest) (*GetFranchiseResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFranchise not implemented")
+}
+func (UnimplementedFantasyServiceServer) CreateUndraftedProspects(context.Context, *CreateUndraftedProspectsRequest) (*CreateUndraftedProspectsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateUndraftedProspects not implemented")
+}
+func (UnimplementedFantasyServiceServer) CreateProspect(context.Context, *CreateProspectRequest) (*CreateProspectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateProspect not implemented")
 }
 func (UnimplementedFantasyServiceServer) mustEmbedUnimplementedFantasyServiceServer() {}
 
@@ -248,6 +276,42 @@ func _FantasyService_GetFranchise_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FantasyService_CreateUndraftedProspects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateUndraftedProspectsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FantasyServiceServer).CreateUndraftedProspects(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/fantasy.FantasyService/CreateUndraftedProspects",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FantasyServiceServer).CreateUndraftedProspects(ctx, req.(*CreateUndraftedProspectsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FantasyService_CreateProspect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateProspectRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FantasyServiceServer).CreateProspect(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/fantasy.FantasyService/CreateProspect",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FantasyServiceServer).CreateProspect(ctx, req.(*CreateProspectRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // FantasyService_ServiceDesc is the grpc.ServiceDesc for FantasyService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -278,6 +342,14 @@ var FantasyService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetFranchise",
 			Handler:    _FantasyService_GetFranchise_Handler,
+		},
+		{
+			MethodName: "CreateUndraftedProspects",
+			Handler:    _FantasyService_CreateUndraftedProspects_Handler,
+		},
+		{
+			MethodName: "CreateProspect",
+			Handler:    _FantasyService_CreateProspect_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

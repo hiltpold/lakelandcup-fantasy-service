@@ -8,12 +8,14 @@ import (
 )
 
 type Prospect struct {
-	ID          uuid.UUID `json:"id" gorm:"primaryKey"`
-	FullName    string    `json:"fullName" gorm:"type:string"`
-	FirstName   string    `json:"firstName" gorm:"type:string"`
-	LastName    string    `json:"lastName" gorm:"type:string"`
-	FranchiseID uuid.UUID `json:"franchiseID" gorm:"foreignKey:ProspectID"`
-	Pick        Pick      `json:"pick" gorm:"foreignKey:ProspectID"`
+	ID          uuid.UUID  `json:"id" gorm:"primaryKey"`
+	FullName    string     `json:"fullName" gorm:"not null;type:string"`
+	FirstName   string     `json:"firstName" gorm:"not null;type:string"`
+	LastName    string     `json:"lastName" gorm:"not null;type:string"`
+	Birthdate   string     `json:"birthdate" gorm:"not null;type:string"`
+	LeagueID    *uuid.UUID `json:"leagueID" gorm:"foreignKey:ProspectID"`
+	FranchiseID *uuid.UUID `json:"franchiseID" gorm:"foreignKey:ProspectID"`
+	Pick        Pick       `json:"pick" gorm:"foreignKey:ProspectID"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }

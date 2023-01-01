@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -259,4 +260,62 @@ func (s *Server) GetFranchise(ctx context.Context, req *pb.GetFranchiseRequest) 
 		Result: franchiseRes,
 	}, nil
 
+}
+
+func (s *Server) CreateUndraftedProspects(ctx context.Context, req *pb.CreateUndraftedProspectsRequest) (*pb.CreateUndraftedProspectsResponse, error) {
+	var prospects []models.Prospect
+
+	for _, p := range req.Prospects {
+		prospects = append(prospects, models.Prospect{
+			FullName:  p.FullName,
+			FirstName: p.FirstName,
+			LastName:  p.LastName,
+			Birthdate: p.Birthdate,
+		})
+	}
+
+	if createProspects := s.R.DB.Create(&prospects); createProspects.Error != nil {
+		return &pb.CreateUndraftedProspectsResponse{
+			Status: http.StatusForbidden,
+			Error:  fmt.Sprintf("Creating prospects failed: %v", createProspects.Error),
+		}, nil
+	}
+
+	var result []string
+	for _, p := range prospects {
+		result = append(result, p.ID.String())
+	}
+
+	log.Printf("%v", result)
+
+	return &pb.CreateUndraftedProspectsResponse{
+		Status:      http.StatusCreated,
+		ProspectIds: result,
+	}, nil
+}
+
+func (s *Server) CreateProspect(ctx context.Context, req *pb.CreateProspectRequest) (*pb.CreateProspectResponse, error) {
+	var prospect models.Prospect
+
+	lId := uuid.MustParse(req.Prospect.LeagueID)
+	fId := uuid.MustParse(req.Prospect.FranchiseID)
+
+	prospect.FullName = req.Prospect.FullName
+	prospect.FirstName = req.Prospect.FirstName
+	prospect.LastName = req.Prospect.LastName
+	prospect.Birthdate = req.Prospect.Birthdate
+	prospect.LeagueID = &lId
+	prospect.FranchiseID = &fId
+
+	if createProspect := s.R.DB.Create(&prospect); createProspect.Error != nil {
+		return &pb.CreateProspectResponse{
+			Status: http.StatusForbidden,
+			Error:  fmt.Sprintf("Creating prospects failed %q", createProspect.Error),
+		}, nil
+	}
+
+	return &pb.CreateProspectResponse{
+		Status:     http.StatusCreated,
+		ProspectID: prospect.ID.String(),
+	}, nil
 }
