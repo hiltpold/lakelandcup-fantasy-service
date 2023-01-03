@@ -300,6 +300,13 @@ func (s *Server) CreateProspect(ctx context.Context, req *pb.CreateProspectReque
 	lId := uuid.MustParse(req.Prospect.LeagueID)
 	fId := uuid.MustParse(req.Prospect.FranchiseID)
 
+	if findProspect := s.R.DB.Where(&models.Prospect{FullName: req.Prospect.FullName, Birthdate: req.Prospect.Birthdate, LeagueID: &lId}).First(&prospect); findProspect.Error == nil {
+		return &pb.CreateProspectResponse{
+			Status: http.StatusConflict,
+			Error:  fmt.Sprintf("Prospect already exists in this league (%q)", req.Prospect.FullName),
+		}, nil
+	}
+
 	prospect.FullName = req.Prospect.FullName
 	prospect.FirstName = req.Prospect.FirstName
 	prospect.LastName = req.Prospect.LastName

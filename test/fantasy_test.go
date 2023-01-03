@@ -519,17 +519,42 @@ func TestCreateUndraftedProspects(t *testing.T) {
 	// Generate Drafted Prospects
 
 	p := pb.Prospect{FullName: "Max Muster", FirstName: "Max", LastName: "Muster", Birthdate: "2023-01-01", LeagueID: lResp.LeagueId, FranchiseID: fResp.FranchiseId}
+	p2 := pb.Prospect{FullName: "Max Muster", FirstName: "Max", LastName: "Muster", Birthdate: "2023-01-01", LeagueID: lResp.LeagueId, FranchiseID: fResp.FranchiseId}
 
 	createProspectReq := pb.CreateProspectRequest{Prospect: &p}
 	resp2, err2 := client.CreateProspect(ctx, &createProspectReq)
+
+	createProspectReq2 := pb.CreateProspectRequest{Prospect: &p2}
+	resp3, err3 := client.CreateProspect(ctx, &createProspectReq2)
 
 	if err2 != nil {
 		t.Fatalf("Create Undrafted Prospect Failed: %v", err2)
 	}
 
+	if err3 != nil {
+		t.Fatalf("Create Undrafted Prospect Failed: %v", err3)
+	}
+
 	t.Log("---------------------------------------------")
 	log.Printf("Create prospect Response: %v", resp2)
 	t.Log("---------------------------------------------")
+
+	t.Log("---------------------------------------------")
+	log.Printf("Create prospect Response: %v", resp3)
+	t.Log("---------------------------------------------")
+
+	if resp3.Status != http.StatusConflict {
+		t.Errorf("Http Status %d not equal to expected status %d", resp.Status, http.StatusConflict)
+	}
+
+	if resp3.Status != http.StatusConflict {
+		t.Errorf("Http Status %d not equal to expected status %d", resp3.Status, http.StatusConflict)
+	}
+
+	expectedError := fmt.Sprintf("Prospect already exists in this league (%q)", "Max Muster")
+	if resp3.Error != expectedError {
+		t.Errorf("Output %q not equal to expected %q", resp3.Error, expectedError)
+	}
 
 	db.Where("id IN (?)", resp.ProspectIds).Delete(&models.Prospect{})
 	db.Where("id = ?", resp2.ProspectID).Delete(&models.Prospect{})
