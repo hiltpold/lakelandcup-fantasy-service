@@ -32,12 +32,16 @@ var conn *grpc.ClientConn
 
 // generate test data
 const wrongLeagueId = "00000000-0000-0000-0000-000000000000"
+const userName = "TestUser"
 const userId = "00000000-0000-0000-0000-000000000000"
-const leagueName = "TestLeague"
+const leagueName = "Lakelandcup"
 const foundationYear = "2022"
 const maxFranchises = 1
+const maxProspects = 10
+const draftRightsGoalie = 5
+const draftRightsSkater = 3
 const userId2 = "11111111-1111-1111-1111-111111111111"
-const leagueName2 = "TestLeague2"
+const leagueName2 = "Lakelandcup"
 const maxFranchises2 = 3
 
 const franchiseName = "TestFranchise"
@@ -92,8 +96,8 @@ func TestMain(m *testing.M) {
 	os.Exit(exitVal)
 }
 
-func createLeague(userId string, leagueName string, foundationYear string, maxFranchises int) (*pb.LeagueResponse, error) {
-	req := pb.LeagueRequest{UserId: userId, LeagueName: leagueName, FoundationYear: foundationYear, MaxFranchises: int32(maxFranchises)}
+func createLeague(userId string, leagueName string, foundationYear string, maxFranchises int, maxProspects int, draftRightsGoalies int, draftRightsSkaters int) (*pb.LeagueResponse, error) {
+	req := pb.LeagueRequest{Admin: userName, AdminID: userId, Commissioner: userName, CommissionerID: userId, Name: leagueName, FoundationYear: foundationYear, MaxFranchises: int32(maxFranchises), MaxProspects: int32(maxProspects), DraftRightsGoalie: int32(draftRightsGoalie), DraftRightsSkater: int32(draftRightsSkater)}
 	resp, err := client.CreateLeague(ctx, &req)
 	return resp, err
 }
@@ -107,7 +111,7 @@ func createFranchise(leagueId string, franchiseOwner string, franchiseName strin
 // League
 
 func TestLeagueCreation(t *testing.T) {
-	resp, err := createLeague(userId, leagueName, foundationYear, maxFranchises)
+	resp, err := createLeague(userId, leagueName, foundationYear, maxFranchises, maxProspects, draftRightsGoalie, draftRightsSkater)
 	if err != nil {
 		t.Errorf("League creation failed: %v", err)
 	}
@@ -127,7 +131,7 @@ func TestLeagueCreation(t *testing.T) {
 		t.Errorf("Output [%q] expected to be an uuid", lId)
 	}
 
-	resp2, err2 := createLeague(userId, leagueName, foundationYear, maxFranchises)
+	resp2, err2 := createLeague(userId, leagueName, foundationYear, maxFranchises, maxProspects, draftRightsGoalie, draftRightsSkater)
 	if err2 != nil {
 		t.Errorf("League creation failed: %v", err2)
 	}
@@ -147,6 +151,26 @@ func TestLeagueCreation(t *testing.T) {
 		t.Errorf("Output [%q] not equal to expected [%q]", resp.Error, expectedError)
 	}
 
+	resp3, err3 := createLeague(userId, "NotLakelandCup", foundationYear, maxFranchises, maxProspects, draftRightsGoalie, draftRightsSkater)
+	if err3 != nil {
+		t.Errorf("League creation failed: %v", err3)
+	}
+
+	// Log result
+	t.Log("-----------------------")
+	t.Log("Create League Response:")
+	t.Logf("%+v", resp3)
+	t.Log("-----------------------")
+
+	// Test league creation
+	if resp2.Status != 409 {
+		t.Errorf("Output %d not equal to expected %d", resp2.Status, 409)
+	}
+	expectedError2 := fmt.Sprintf("Wrong league name. Only league %q can be created.", "Lakelandcup")
+	if resp3.Error != expectedError2 {
+		t.Errorf("Output [%q] not equal to expected [%q]", resp.Error, expectedError2)
+	}
+
 	// Clean up
 	db.Where("league_founder = ?", userId).Delete(&models.League{})
 	db.Where("league_founder = ?", userId2).Delete(&models.League{})
@@ -154,7 +178,7 @@ func TestLeagueCreation(t *testing.T) {
 
 func TestFranchiseCreation(t *testing.T) {
 	// Create League
-	lResp, lErr := createLeague(userId, leagueName, foundationYear, maxFranchises)
+	lResp, lErr := createLeague(userId, leagueName, foundationYear, maxFranchises, maxProspects, draftRightsGoalie, draftRightsSkater)
 	if lErr != nil {
 		t.Errorf("League creation failed: %v", lErr)
 	}
@@ -257,7 +281,7 @@ func TestFranchiseCreation(t *testing.T) {
 
 func TestGetLeague(t *testing.T) {
 	// Create League 1
-	lResp, lErr := createLeague(userId, leagueName, foundationYear, maxFranchises)
+	lResp, lErr := createLeague(userId, leagueName, foundationYear, maxFranchises, maxProspects, draftRightsGoalie, draftRightsSkater)
 	if lErr != nil {
 		t.Errorf("League creation failed: %v", lErr)
 	}
@@ -304,7 +328,7 @@ func TestGetLeague(t *testing.T) {
 
 func TestGetLeagueFranchisePairs(t *testing.T) {
 	// Create League 1
-	lResp, lErr := createLeague(userId, leagueName, foundationYear, maxFranchises2)
+	lResp, lErr := createLeague(userId, leagueName, foundationYear, maxFranchises2, maxProspects, draftRightsGoalie, draftRightsSkater)
 	if lErr != nil {
 		t.Errorf("League creation failed: %v", lErr)
 	}
@@ -316,7 +340,7 @@ func TestGetLeagueFranchisePairs(t *testing.T) {
 	t.Log("-----------------------")
 
 	// Create league 2
-	lResp2, lErr2 := createLeague(userId2, leagueName2, foundationYear, maxFranchises2)
+	lResp2, lErr2 := createLeague(userId2, leagueName2, foundationYear, maxFranchises2, maxProspects, draftRightsGoalie, draftRightsSkater)
 	if lErr2 != nil {
 		t.Errorf("League creation failed: %v", lErr2)
 	}
@@ -431,7 +455,7 @@ func TestGetLeagueFranchisePairs(t *testing.T) {
 
 func TestGetFranchise(t *testing.T) {
 	// Create League 1
-	lResp, lErr := createLeague(userId, leagueName, foundationYear, maxFranchises)
+	lResp, lErr := createLeague(userId, leagueName, foundationYear, maxFranchises, maxProspects, draftRightsGoalie, draftRightsSkater)
 	if lErr != nil {
 		t.Errorf("League creation failed: %v", lErr)
 	}
@@ -479,7 +503,7 @@ func TestGetFranchise(t *testing.T) {
 // Prospects
 func TestCreateUndraftedProspects(t *testing.T) {
 	// Create League 1
-	lResp, lErr := createLeague(userId, leagueName, foundationYear, maxFranchises)
+	lResp, lErr := createLeague(userId, leagueName, foundationYear, maxFranchises, maxProspects, draftRightsGoalie, draftRightsSkater)
 	if lErr != nil {
 		t.Errorf("League creation failed: %v", lErr)
 	}

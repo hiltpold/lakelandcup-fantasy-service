@@ -10,6 +10,7 @@ import (
 	"github.com/hiltpold/lakelandcup-fantasy-service/models"
 	"github.com/hiltpold/lakelandcup-fantasy-service/service/pb"
 	"github.com/hiltpold/lakelandcup-fantasy-service/storage"
+	"github.com/sirupsen/logrus"
 )
 
 type Server struct {
@@ -20,23 +21,36 @@ type Server struct {
 
 func (s *Server) CreateLeague(ctx context.Context, req *pb.LeagueRequest) (*pb.LeagueResponse, error) {
 	var league models.League
-
-	// TODO: check if userId exisits
+	const leagueName = "Lakelandcup"
+	// only lakelandcup league can be created
+	if req.Name != leagueName {
+		return &pb.LeagueResponse{
+			Status: http.StatusConflict,
+			Error:  fmt.Sprintf("Wrong league name. Only league %q can be created.", leagueName),
+		}, nil
+	}
 
 	// check if league already exists
-
-	if findLeague := s.R.DB.Where(&models.League{LeagueName: req.LeagueName}).First(&league); findLeague.Error == nil {
+	if findLeague := s.R.DB.Where(&models.League{Name: req.Name}).First(&league); findLeague.Error == nil {
 		return &pb.LeagueResponse{
 			Status: http.StatusConflict,
 			Error:  "League already exists",
 		}, nil
 	}
 
-	league.LeagueFounder = uuid.MustParse(req.UserId)
-	league.LeagueName = req.LeagueName
+	league.Name = req.Name
+	league.Admin = req.Admin
+	league.AdminID = uuid.MustParse(req.AdminID)
+	league.Commissioner = req.Commissioner
+	league.CommissionerID = uuid.MustParse(req.CommissionerID)
 	league.FoundationYear = req.FoundationYear
 	league.MaxFranchises = int(req.MaxFranchises)
+	league.MaxProspects = int(req.MaxProspects)
+	league.DraftRightsGoalie = int(req.DraftRightsGoalie)
+	league.DraftRightsSkater = int(req.DraftRightsSkater)
 	league.Franchises = []models.Franchise{}
+
+	logrus.Info(fmt.Sprintf("%+v", league))
 
 	if createLeague := s.R.DB.Create(&league); createLeague.Error != nil {
 		return &pb.LeagueResponse{
@@ -65,7 +79,7 @@ func (s *Server) GetLeagueFranchisePairs(ctx context.Context, req *pb.GetLeagueF
 				}
 			}
 		} else {
-			if l.LeagueFounder.String() == req.UserId {
+			if l.AdminID.String() == req.UserId {
 				res = append(res, &pb.LeagueFranchisePair{LeagueID: l.ID.String(), FranchiseID: ""})
 			}
 		}
@@ -87,14 +101,14 @@ func (s *Server) GetLeague(ctx context.Context, req *pb.GetLeagueRequest) (*pb.G
 	if findLeague.Error != nil {
 		return &pb.GetLeagueResponse{
 			Status: http.StatusConflict,
-			Error:  fmt.Sprintf("Getting leagueId (%s) failed", req.LeagueId),
+			Error:  fmt.Sprintf("Getting LeagueID (%s) failed", req.LeagueId),
 		}, nil
 	}
 
 	if findLeague.RowsAffected == 0 {
 		return &pb.GetLeagueResponse{
 			Status: http.StatusConflict,
-			Error:  fmt.Sprintf("leagueId (%s) does not exist", req.LeagueId),
+			Error:  fmt.Sprintf("LeagueID (%s) does not exist", req.LeagueId),
 		}, nil
 
 	}
@@ -113,12 +127,18 @@ func (s *Server) GetLeague(ctx context.Context, req *pb.GetLeagueRequest) (*pb.G
 		franchisesRes = append(franchisesRes, &pb.Franchise{})
 	}
 	leagueRes = &pb.League{
-		ID:             league.ID.String(),
-		LeagueFounder:  league.LeagueFounder.String(),
-		LeagueName:     league.LeagueName,
-		FoundationYear: league.FoundationYear,
-		MaxFranchises:  int32(league.MaxFranchises),
-		Franchises:     franchisesRes,
+		ID:                league.ID.String(),
+		Name:              league.Name,
+		Admin:             league.Admin,
+		AdminID:           league.AdminID.String(),
+		Commissioner:      league.Commissioner,
+		CommissionerID:    league.CommissionerID.String(),
+		FoundationYear:    league.FoundationYear,
+		MaxFranchises:     int32(league.MaxFranchises),
+		MaxProspects:      int32(league.MaxProspects),
+		DraftRightsGoalie: int32(league.DraftRightsGoalie),
+		DraftRightsSkater: int32(league.DraftRightsSkater),
+		Franchises:        franchisesRes,
 	}
 
 	return &pb.GetLeagueResponse{
@@ -150,12 +170,18 @@ func (s *Server) GetLeagues(ctx context.Context, req *pb.GetLeaguesRequest) (*pb
 			franchisesRes = append(franchisesRes, &pb.Franchise{})
 		}
 		tmpLeague := pb.League{
-			ID:             l.ID.String(),
-			LeagueFounder:  l.LeagueFounder.String(),
-			LeagueName:     l.LeagueName,
-			FoundationYear: l.FoundationYear,
-			MaxFranchises:  int32(l.MaxFranchises),
-			Franchises:     franchisesRes,
+			ID:                l.ID.String(),
+			Name:              l.Name,
+			Admin:             l.Admin,
+			AdminID:           l.AdminID.String(),
+			Commissioner:      l.Commissioner,
+			CommissionerID:    l.CommissionerID.String(),
+			FoundationYear:    l.FoundationYear,
+			MaxFranchises:     int32(l.MaxFranchises),
+			MaxProspects:      int32(l.MaxProspects),
+			DraftRightsGoalie: int32(l.DraftRightsGoalie),
+			DraftRightsSkater: int32(l.DraftRightsSkater),
+			Franchises:        franchisesRes,
 		}
 		leagueRes = append(leagueRes, &tmpLeague)
 	}
