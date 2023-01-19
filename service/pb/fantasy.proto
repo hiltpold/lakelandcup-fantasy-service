@@ -8,6 +8,8 @@ service FantasyService {
   rpc CreateLeague(LeagueRequest) returns (LeagueResponse) {}
   rpc GetLeagues(GetLeaguesRequest) returns (GetLeaguesResponse) {}
   rpc GetLeague(GetLeagueRequest) returns (GetLeagueResponse) {}
+  rpc UpdateLeague(LeagueUpdateRequest) returns (LeagueResponse) {}
+  rpc GetLeagueFranchises(GetLeagueRequest) returns (GetLeagueFranchisesResponse) {}
   rpc GetLeagueFranchisePairs(GetLeagueFranchisePairsRequest) returns (GetLeagueFranchisePairsResponse) {}
   rpc CreateFranchise(FranchiseRequest) returns (FranchiseResponse) {}
   rpc GetFranchise(GetFranchiseRequest) returns (GetFranchiseResponse) {}
@@ -36,11 +38,12 @@ message League {
 
 message Franchise {
 	string ID = 1;
-    string FranchisOwner = 2;
-    string FranchiseName = 3;
-    string FoundationYear = 4;
-    string LeagueID = 5;
-    repeated Prospect Prospects = 6;
+    string Name = 2;
+    string OwnerID = 3;
+    string OwnerName = 4;
+    string FoundationYear = 5;
+    string LeagueID = 6;
+    repeated Prospect Prospects = 7;
 }
 
 message Prospect {
@@ -79,6 +82,12 @@ message LeagueRequest {
   int32 DraftRightsSkater = 10;
 }
 
+// update
+message LeagueUpdateRequest {
+    string id = 1;
+    LeagueRequest league = 2;
+}
+
 message LeagueResponse {
   int64 status = 1;
   string error = 2;
@@ -95,6 +104,7 @@ message GetLeaguesResponse {
   repeated League result = 3;
 }
 
+
 // get single league
 message GetLeagueRequest{
     string leagueId = 1;
@@ -104,6 +114,12 @@ message GetLeagueResponse {
   int64 status = 1;
   string error = 2;
   League result = 3;
+}
+
+message GetLeagueFranchisesResponse {
+  int64 status = 1;
+  string error = 2;
+  repeated Franchise result = 3;
 }
 
 // get all leagues an associated franchises
@@ -126,21 +142,22 @@ message GetLeagueFranchisePairsResponse {
 
 // create franchise
 message FranchiseRequest {
-  string leagueId = 1;
-  string franchiseOwner = 2;
-  string franchiseName = 3;
-  string foundationYear = 4;
+  string Name = 1;
+  string OwnerID = 2;
+  string OwnerName = 3;
+  string FoundationYear = 4;
+  string LeagueId = 5;
 }
 
 message FranchiseResponse {
   int64 status = 1;
   string error = 2;
-  string franchiseId = 3;
+  string FranchiseId = 3;
 }
 
 // get single league
 message GetFranchiseRequest{
-    string franchiseId = 1;
+    string FranchiseId = 1;
 }
 
 message GetFranchiseResponse {

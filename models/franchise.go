@@ -9,8 +9,9 @@ import (
 
 type Franchise struct {
 	ID             uuid.UUID  `json:"id" gorm:"primaryKey"`
-	FranchiseOwner uuid.UUID  `json:"franchiseOwner" gorm:"not null;type:uuid;"`
-	FranchiseName  string     `json:"franchiseName" gorm:"not null;type:string"`
+	Name           string     `json:"name" gorm:"not null;type:string"`
+	OwnerID        uuid.UUID  `json:"ownerId" gorm:"not null;type:uuid;"`
+	OwnerName      string     `json:"ownerName" gorm:"not null;type:string;"`
 	FoundationYear string     `json:"foundationYear" gorm:"not null;type:string"`
 	LeagueID       uuid.UUID  `json:"leagueId" gorm:"not null;foreignKey:FranchiseID"`
 	Prospects      []Prospect `json:"prospects" gorm:"foreignKey:FranchiseID"`
