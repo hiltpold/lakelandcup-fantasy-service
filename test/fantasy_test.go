@@ -103,7 +103,7 @@ func createLeague(userId string, leagueName string, foundationYear string, maxFr
 }
 
 func createFranchise(leagueId string, franchiseOwner string, franchiseName string, foundationYear string) (*pb.FranchiseResponse, error) {
-	req := pb.FranchiseRequest{LeagueId: leagueId, FranchiseOwner: franchiseOwner, FranchiseName: franchiseName, FoundationYear: foundationYear}
+	req := pb.FranchiseRequest{LeagueId: leagueId, OwnerName: franchiseOwner, Name: franchiseName, FoundationYear: foundationYear}
 	resp, err := client.CreateFranchise(ctx, &req)
 	return resp, err
 }
