@@ -373,14 +373,13 @@ func (s *Server) GetLeagueFranchises(ctx context.Context, req *pb.GetLeagueReque
 
 }
 
-
 func (s *Server) CreateProspectsBulk(ctx context.Context, req *pb.CreateProspectsBulkRequest) (*pb.CreateProspectsBulkResponse, error) {
 
 	prospects := []models.Prospect{}
 
-	for _,pReq:= range req.Prospects {
+	for _, pReq := range req.Prospects {
 		var prospect models.Prospect
-		if findProspect := s.R.DB.Where(&models.Prospect{FullName: pReq.FullName, Birthdate: pReq.Birthdate,DraftYear: pReq.DraftYear, NhlDraftPickOverall: pReq.NhlDraftPickOverall}).First(&prospect); findProspect.Error != nil {
+		if findProspect := s.R.DB.Where(&models.Prospect{FullName: pReq.FullName, Birthdate: pReq.Birthdate, DraftYear: pReq.DraftYear, NhlDraftPickOverall: pReq.NhlDraftPickOverall}).First(&prospect); findProspect.Error != nil {
 			prospect.FullName = pReq.FullName
 			prospect.FirstName = pReq.FirstName
 			prospect.LastName = pReq.LastName
@@ -409,11 +408,53 @@ func (s *Server) CreateProspectsBulk(ctx context.Context, req *pb.CreateProspect
 	}
 
 	return &pb.CreateProspectsBulkResponse{
-		Status:     http.StatusCreated,
+		Status:      http.StatusCreated,
 		ProspectIds: []string{},
 	}, nil
 }
 
+func (s *Server) TextSearchProspects(ctx context.Context, req *pb.TextSearchRequest) (*pb.TextSearchProspectsResponse, error) {
+
+	rows, err := s.R.DB.Raw(fmt.Sprintf("SELECT * FROM fantasy.prospects WHERE to_tsvector(full_name) @@ to_tsquery('%q')", req.Text)).Rows()
+	if err != nil {
+		return &pb.TextSearchProspectsResponse{
+			Status: http.StatusConflict,
+			Error:  fmt.Sprintf("Creating prospects failed %q", err),
+		}, nil
+	}
+	defer rows.Close()
+
+	prospectsRes := []*pb.Prospect{}
+
+	for rows.Next() {
+		p := models.Prospect{}
+		s.R.DB.ScanRows(rows, &p)
+		pp := &pb.Prospect{
+			ID:                  p.ID.String(),
+			FullName:            p.FullName,
+			FirstName:           p.FirstName,
+			LastName:            p.LastName,
+			NhlTeam:             p.NhlTeam,
+			Birthdate:           p.Birthdate,
+			Height:              p.Height,
+			Weight:              p.Weight,
+			PositionCode:        p.PositionCode,
+			DraftYear:           p.DraftYear,
+			NhlDraftRound:       p.NhlDraftRound,
+			NhlPickInRound:      p.NhlDraftPickInRound,
+			NhlDraftPickOverall: p.NhlDraftPickOverall,
+			LeagueID:            "p.LeagueID.String()",
+			FranchiseID:         "p.FranchiseID.String()",
+			PickID:              "",
+		}
+		prospectsRes = append(prospectsRes, pp)
+	}
+
+	return &pb.TextSearchProspectsResponse{
+		Status:    http.StatusOK,
+		Prospects: prospectsRes,
+	}, nil
+}
 
 func (s *Server) CreateProspect(ctx context.Context, req *pb.CreateProspectRequest) (*pb.CreateProspectResponse, error) {
 	var prospect models.Prospect

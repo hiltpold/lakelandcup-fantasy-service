@@ -15,6 +15,7 @@ service FantasyService {
     rpc GetFranchise(GetFranchiseRequest) returns (GetFranchiseResponse) {}
     rpc CreateProspect(CreateProspectRequest) returns (CreateProspectResponse) {}
     rpc CreateProspectsBulk(CreateProspectsBulkRequest) returns (CreateProspectsBulkResponse) {}
+    rpc TextSearchProspects(TextSearchRequest) returns (TextSearchProspectsResponse) {}
   }
   
   /*
@@ -48,20 +49,21 @@ service FantasyService {
 
   message Prospect {
       string ID = 1;
-      string fullName = 2;
-      string firstName = 3;
-      string lastName = 4;
-      string nhlTeam = 11;
-      string birthdate = 5;
-      string height = 6;
-      string weight = 7;
-      string nhlDraftRound = 8;
-      string nhlDraftPickOverall = 9;
-      string nhlPickInRound = 10;
-      string positionCode = 12; 
-      string LeagueID = 13;
-      string FranchiseID = 14;
-      string PickID = 15;
+      string FullName = 2;
+      string FirstName = 3;
+      string LastName = 4;
+      string NhlTeam = 5;
+      string DraftYear = 6;
+      string Birthdate = 7;
+      string Height = 8;
+      string Weight = 9;
+      string NhlDraftRound = 10;
+      string NhlDraftPickOverall = 11;
+      string NhlPickInRound = 12;
+      string PositionCode = 13; 
+      string LeagueID = 14;
+      string FranchiseID = 15;
+      string PickID = 16;
   }
   
   message Pick {
@@ -210,3 +212,16 @@ service FantasyService {
   }
   
   // Picks
+
+
+  // Query
+  
+  message TextSearchRequest {
+    string text = 1;
+  }
+
+  message TextSearchProspectsResponse {
+    int64 status = 1;
+    string error = 2;
+    repeated Prospect prospects = 3;
+  }
