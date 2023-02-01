@@ -5,186 +5,208 @@ package fantasy;
 option go_package = "./service/pb";
 
 service FantasyService {
-  rpc CreateLeague(LeagueRequest) returns (LeagueResponse) {}
-  rpc GetLeagues(GetLeaguesRequest) returns (GetLeaguesResponse) {}
-  rpc GetLeague(GetLeagueRequest) returns (GetLeagueResponse) {}
-  rpc UpdateLeague(LeagueUpdateRequest) returns (LeagueResponse) {}
-  rpc GetLeagueFranchises(GetLeagueRequest) returns (GetLeagueFranchisesResponse) {}
-  rpc GetLeagueFranchisePairs(GetLeagueFranchisePairsRequest) returns (GetLeagueFranchisePairsResponse) {}
-  rpc CreateFranchise(FranchiseRequest) returns (FranchiseResponse) {}
-  rpc GetFranchise(GetFranchiseRequest) returns (GetFranchiseResponse) {}
-  rpc CreateUndraftedProspects(CreateUndraftedProspectsRequest) returns (CreateUndraftedProspectsResponse) {}
-  rpc CreateProspect(CreateProspectRequest) returns (CreateProspectResponse) {}
-}
+    rpc CreateLeague(LeagueRequest) returns (LeagueResponse) {}
+    rpc GetLeagues(GetLeaguesRequest) returns (GetLeaguesResponse) {}
+    rpc GetLeague(GetLeagueRequest) returns (GetLeagueResponse) {}
+    rpc UpdateLeague(LeagueUpdateRequest) returns (LeagueResponse) {}
+    rpc GetLeagueFranchises(GetLeagueRequest) returns (GetLeagueFranchisesResponse) {}
+    rpc GetLeagueFranchisePairs(GetLeagueFranchisePairsRequest) returns (GetLeagueFranchisePairsResponse) {}
+    rpc CreateFranchise(FranchiseRequest) returns (FranchiseResponse) {}
+    rpc GetFranchise(GetFranchiseRequest) returns (GetFranchiseResponse) {}
+    rpc CreateProspect(CreateProspectRequest) returns (CreateProspectResponse) {}
+    rpc CreateProspectsBulk(CreateProspectsBulkRequest) returns (CreateProspectsBulkResponse) {}
+  }
+  
+  /*
+      Lakelandcup
+  */
+  
+  message League {
+    string ID = 1;
+    string Admin = 2;
+    string AdminID = 3;
+    string Commissioner = 4;
+    string CommissionerID = 5;
+    string Name = 6;
+    string FoundationYear = 7;
+    int32 MaxFranchises = 8;
+    int32 MaxProspects = 9;
+    int32 DraftRightsGoalie = 10;
+    int32 DraftRightsSkater = 11;
+    repeated Franchise Franchises = 12;
+  }
+  
+  message Franchise {
+      string ID = 1;
+      string Name = 2;
+      string OwnerID = 3;
+      string OwnerName = 4;
+      string FoundationYear = 5;
+      string LeagueID = 6;
+      repeated Prospect Prospects = 7;
+  }
 
-/*
-    Lakelandcup
-*/
-
-message League {
-  string ID = 1;
-  string Admin = 2;
-  string AdminID = 3;
-  string Commissioner = 4;
-  string CommissionerID = 5;
-  string Name = 6;
-  string FoundationYear = 7;
-  int32 MaxFranchises = 8;
-  int32 MaxProspects = 9;
-  int32 DraftRightsGoalie = 10;
-  int32 DraftRightsSkater = 11;
-  repeated Franchise Franchises = 12;
-}
-
-message Franchise {
-	string ID = 1;
-    string Name = 2;
-    string OwnerID = 3;
-    string OwnerName = 4;
-    string FoundationYear = 5;
-    string LeagueID = 6;
-    repeated Prospect Prospects = 7;
-}
-
-message Prospect {
-	string ID = 1;
-    string fullName = 2;
-    string firstName = 3;
-    string lastName = 4;
-    string birthdate = 5;
-    string LeagueID = 6;
-    string FranchiseID = 7;
-    string PickID = 8;
-}
-
-message Pick {
-	string ID = 1;
-    string DraftYear = 2;
-    string DraftRound= 3;
-    string DraftPickOverall= 4;
-    string DraftPickInRound = 5;
-    string ProspectID = 6;
-}
-
-// League
-
-// create
-message LeagueRequest {
-  string Admin = 1;
-  string AdminID = 2;
-  string Commissioner = 3;
-  string CommissionerID = 4;
-  string Name = 5;
-  string FoundationYear = 6;
-  int32 MaxFranchises = 7;
-  int32 MaxProspects = 8;
-  int32 DraftRightsGoalie = 9;
-  int32 DraftRightsSkater = 10;
-}
-
-// update
-message LeagueUpdateRequest {
-    string id = 1;
-    LeagueRequest league = 2;
-}
-
-message LeagueResponse {
-  int64 status = 1;
-  string error = 2;
-  string leagueId = 3;
-}
-
-// get all leagues
-message GetLeaguesRequest{
-}
-
-message GetLeaguesResponse {
-  int64 status = 1;
-  string error = 2;
-  repeated League result = 3;
-}
-
-
-// get single league
-message GetLeagueRequest{
-    string leagueId = 1;
-}
-
-message GetLeagueResponse {
-  int64 status = 1;
-  string error = 2;
-  League result = 3;
-}
-
-message GetLeagueFranchisesResponse {
-  int64 status = 1;
-  string error = 2;
-  repeated Franchise result = 3;
-}
-
-// get all leagues an associated franchises
-message GetLeagueFranchisePairsRequest {
-    string userId = 2;
-}
-
-message LeagueFranchisePair {
-    string LeagueID = 1;
-    string FranchiseID = 2;
-}
-
-message GetLeagueFranchisePairsResponse {
+  message Prospect {
+      string ID = 1;
+      string fullName = 2;
+      string firstName = 3;
+      string lastName = 4;
+      string nhlTeam = 11;
+      string birthdate = 5;
+      string height = 6;
+      string weight = 7;
+      string nhlDraftRound = 8;
+      string nhlDraftPickOverall = 9;
+      string nhlPickInRound = 10;
+      string positionCode = 12; 
+      string LeagueID = 13;
+      string FranchiseID = 14;
+      string PickID = 15;
+  }
+  
+  message Pick {
+      string ID = 1;
+      string DraftYear = 2;
+      string DraftRound= 3;
+      string DraftPickOverall= 4;
+      string DraftPickInRound = 5;
+      string ProspectID = 6;
+  }
+  
+  // League
+  
+  // create
+  message LeagueRequest {
+    string Admin = 1;
+    string AdminID = 2;
+    string Commissioner = 3;
+    string CommissionerID = 4;
+    string Name = 5;
+    string FoundationYear = 6;
+    int32 MaxFranchises = 7;
+    int32 MaxProspects = 8;
+    int32 DraftRightsGoalie = 9;
+    int32 DraftRightsSkater = 10;
+  }
+  
+  // update
+  message LeagueUpdateRequest {
+      string id = 1;
+      LeagueRequest league = 2;
+  }
+  
+  message LeagueResponse {
     int64 status = 1;
     string error = 2;
-    repeated LeagueFranchisePair result  = 3;
-}
+    string leagueId = 3;
+  }
+  
+  // get all leagues
+  message GetLeaguesRequest{
+  }
+  
+  message GetLeaguesResponse {
+    int64 status = 1;
+    string error = 2;
+    repeated League result = 3;
+  }
+  
+  
+  // get single league
+  message GetLeagueRequest{
+      string leagueId = 1;
+  }
+  
+  message GetLeagueResponse {
+    int64 status = 1;
+    string error = 2;
+    League result = 3;
+  }
+  
+  message GetLeagueFranchisesResponse {
+    int64 status = 1;
+    string error = 2;
+    repeated Franchise result = 3;
+  }
+  
+  // get all leagues an associated franchises
+  message GetLeagueFranchisePairsRequest {
+      string userId = 2;
+  }
+  
+  message LeagueFranchisePair {
+      string LeagueID = 1;
+      string FranchiseID = 2;
+  }
+  
+  message GetLeagueFranchisePairsResponse {
+      int64 status = 1;
+      string error = 2;
+      repeated LeagueFranchisePair result  = 3;
+  }
+  
+  // Franchise
+  
+  // create franchise
+  message FranchiseRequest {
+    string Name = 1;
+    string OwnerID = 2;
+    string OwnerName = 3;
+    string FoundationYear = 4;
+    string LeagueId = 5;
+  }
+  
+  message FranchiseResponse {
+    int64 status = 1;
+    string error = 2;
+    string FranchiseId = 3;
+  }
+  
+  // get single league
+  message GetFranchiseRequest{
+      string FranchiseId = 1;
+  }
+  
+  message GetFranchiseResponse {
+    int64 status = 1;
+    string error = 2;
+    Franchise result = 3;
+  }
+  
+  // Prospects
+  message CreateProspect {
+      string fullName = 1;
+      string firstName = 2;
+      string lastName = 3;
+      string nhlTeam = 4;
+      string birthdate = 5;
+      string height = 6;
+      string weight = 7;
+      string draftYear = 8;
+      string nhlDraftRound = 9;
+      string nhlDraftPickOverall = 10;
+      string nhlDraftPickInRound = 11;
+      string positionCode = 12; 
+  }
 
-// Franchise
+  message CreateProspectRequest {
+    Prospect prospect = 1;
+  }
 
-// create franchise
-message FranchiseRequest {
-  string Name = 1;
-  string OwnerID = 2;
-  string OwnerName = 3;
-  string FoundationYear = 4;
-  string LeagueId = 5;
-}
-
-message FranchiseResponse {
-  int64 status = 1;
-  string error = 2;
-  string FranchiseId = 3;
-}
-
-// get single league
-message GetFranchiseRequest{
-    string FranchiseId = 1;
-}
-
-message GetFranchiseResponse {
-  int64 status = 1;
-  string error = 2;
-  Franchise result = 3;
-}
-
-// Prospects
-
-message CreateProspectRequest {
-  Prospect prospect = 1;
-}
-message CreateProspectResponse {
-  int64 status = 1;
-  string error = 2;
-  string prospectID = 3;
-}
-
-message CreateUndraftedProspectsRequest {
-    repeated Prospect prospects = 1;
-}
-
-message CreateUndraftedProspectsResponse {
-  int64 status = 1;
-  string error = 2;
-  repeated string prospectIds = 3;
-}
-
-// Picks
+  message CreateProspectResponse {
+    int64 status = 1;
+    string error = 2;
+    string prospectID = 3;
+  }
+  
+  message CreateProspectsBulkRequest {
+      repeated CreateProspect prospects = 1;
+  }
+  
+  message CreateProspectsBulkResponse {
+    int64 status = 1;
+    string error = 2;
+    repeated string prospectIds = 3;
+  }
+  
+  // Picks

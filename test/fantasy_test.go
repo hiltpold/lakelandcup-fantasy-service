@@ -499,7 +499,7 @@ func TestGetFranchise(t *testing.T) {
 	db.Where("franchise_owner = ?", userId).Delete(&models.Franchise{})
 	db.Where("league_founder = ?", userId).Delete(&models.League{})
 }
-
+/*
 // Prospects
 func TestCreateUndraftedProspects(t *testing.T) {
 	// Create League 1
@@ -585,3 +585,4 @@ func TestCreateUndraftedProspects(t *testing.T) {
 	db.Where("franchise_owner = ?", userId).Delete(&models.Franchise{})
 	db.Where("league_founder = ?", userId).Delete(&models.League{})
 }
+*/

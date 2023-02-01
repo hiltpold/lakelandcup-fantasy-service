@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -374,37 +373,47 @@ func (s *Server) GetLeagueFranchises(ctx context.Context, req *pb.GetLeagueReque
 
 }
 
-func (s *Server) CreateUndraftedProspects(ctx context.Context, req *pb.CreateUndraftedProspectsRequest) (*pb.CreateUndraftedProspectsResponse, error) {
-	var prospects []models.Prospect
 
-	for _, p := range req.Prospects {
-		prospects = append(prospects, models.Prospect{
-			FullName:  p.FullName,
-			FirstName: p.FirstName,
-			LastName:  p.LastName,
-			Birthdate: p.Birthdate,
-		})
+func (s *Server) CreateProspectsBulk(ctx context.Context, req *pb.CreateProspectsBulkRequest) (*pb.CreateProspectsBulkResponse, error) {
+
+	prospects := []models.Prospect{}
+
+	for _,pReq:= range req.Prospects {
+		var prospect models.Prospect
+		if findProspect := s.R.DB.Where(&models.Prospect{FullName: pReq.FullName, Birthdate: pReq.Birthdate,DraftYear: pReq.DraftYear, NhlDraftPickOverall: pReq.NhlDraftPickOverall}).First(&prospect); findProspect.Error != nil {
+			prospect.FullName = pReq.FullName
+			prospect.FirstName = pReq.FirstName
+			prospect.LastName = pReq.LastName
+			prospect.NhlTeam = pReq.NhlTeam
+			prospect.Birthdate = pReq.Birthdate
+			prospect.Height = pReq.Height
+			prospect.Weight = pReq.Weight
+			prospect.DraftYear = pReq.DraftYear
+			prospect.NhlDraftRound = pReq.NhlDraftRound
+			prospect.NhlDraftPickInRound = pReq.NhlDraftPickInRound
+			prospect.NhlDraftPickOverall = pReq.NhlDraftPickOverall
+			prospect.PositionCode = pReq.PositionCode
+			prospects = append(prospects, prospect)
+		}
+	}
+	if len(prospects) > 0 {
+		logrus.Info(fmt.Sprintf("Prospects that will be batch inserted: %v", len(prospects)))
+		if createProspects := s.R.DB.Create(&prospects); createProspects.Error != nil {
+			return &pb.CreateProspectsBulkResponse{
+				Status: http.StatusForbidden,
+				Error:  fmt.Sprintf("Creating prospects failed %q", createProspects.Error),
+			}, nil
+		}
+	} else {
+		logrus.Info(fmt.Sprintf("Prospects that will be batch inserted: %v", len(prospects)))
 	}
 
-	if createProspects := s.R.DB.Create(&prospects); createProspects.Error != nil {
-		return &pb.CreateUndraftedProspectsResponse{
-			Status: http.StatusForbidden,
-			Error:  fmt.Sprintf("Creating prospects failed: %v", createProspects.Error),
-		}, nil
-	}
-
-	var result []string
-	for _, p := range prospects {
-		result = append(result, p.ID.String())
-	}
-
-	log.Printf("%v", result)
-
-	return &pb.CreateUndraftedProspectsResponse{
-		Status:      http.StatusCreated,
-		ProspectIds: result,
+	return &pb.CreateProspectsBulkResponse{
+		Status:     http.StatusCreated,
+		ProspectIds: []string{},
 	}, nil
 }
+
 
 func (s *Server) CreateProspect(ctx context.Context, req *pb.CreateProspectRequest) (*pb.CreateProspectResponse, error) {
 	var prospect models.Prospect
