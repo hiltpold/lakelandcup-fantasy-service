@@ -33,6 +33,7 @@ type FantasyServiceClient interface {
 	CreateProspect(ctx context.Context, in *CreateProspectRequest, opts ...grpc.CallOption) (*CreateProspectResponse, error)
 	CreateProspectsBulk(ctx context.Context, in *CreateProspectsBulkRequest, opts ...grpc.CallOption) (*CreateProspectsBulkResponse, error)
 	TextSearchProspects(ctx context.Context, in *TextSearchRequest, opts ...grpc.CallOption) (*TextSearchProspectsResponse, error)
+	DraftProspect(ctx context.Context, in *DraftProspectRequest, opts ...grpc.CallOption) (*DraftProspectResponse, error)
 }
 
 type fantasyServiceClient struct {
@@ -142,6 +143,15 @@ func (c *fantasyServiceClient) TextSearchProspects(ctx context.Context, in *Text
 	return out, nil
 }
 
+func (c *fantasyServiceClient) DraftProspect(ctx context.Context, in *DraftProspectRequest, opts ...grpc.CallOption) (*DraftProspectResponse, error) {
+	out := new(DraftProspectResponse)
+	err := c.cc.Invoke(ctx, "/fantasy.FantasyService/DraftProspect", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FantasyServiceServer is the server API for FantasyService service.
 // All implementations must embed UnimplementedFantasyServiceServer
 // for forward compatibility
@@ -157,6 +167,7 @@ type FantasyServiceServer interface {
 	CreateProspect(context.Context, *CreateProspectRequest) (*CreateProspectResponse, error)
 	CreateProspectsBulk(context.Context, *CreateProspectsBulkRequest) (*CreateProspectsBulkResponse, error)
 	TextSearchProspects(context.Context, *TextSearchRequest) (*TextSearchProspectsResponse, error)
+	DraftProspect(context.Context, *DraftProspectRequest) (*DraftProspectResponse, error)
 	mustEmbedUnimplementedFantasyServiceServer()
 }
 
@@ -196,6 +207,9 @@ func (UnimplementedFantasyServiceServer) CreateProspectsBulk(context.Context, *C
 }
 func (UnimplementedFantasyServiceServer) TextSearchProspects(context.Context, *TextSearchRequest) (*TextSearchProspectsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method TextSearchProspects not implemented")
+}
+func (UnimplementedFantasyServiceServer) DraftProspect(context.Context, *DraftProspectRequest) (*DraftProspectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DraftProspect not implemented")
 }
 func (UnimplementedFantasyServiceServer) mustEmbedUnimplementedFantasyServiceServer() {}
 
@@ -408,6 +422,24 @@ func _FantasyService_TextSearchProspects_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FantasyService_DraftProspect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DraftProspectRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FantasyServiceServer).DraftProspect(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/fantasy.FantasyService/DraftProspect",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FantasyServiceServer).DraftProspect(ctx, req.(*DraftProspectRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // FantasyService_ServiceDesc is the grpc.ServiceDesc for FantasyService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -458,6 +490,10 @@ var FantasyService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "TextSearchProspects",
 			Handler:    _FantasyService_TextSearchProspects_Handler,
+		},
+		{
+			MethodName: "DraftProspect",
+			Handler:    _FantasyService_DraftProspect_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

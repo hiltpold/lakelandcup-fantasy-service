@@ -16,6 +16,7 @@ service FantasyService {
     rpc CreateProspect(CreateProspectRequest) returns (CreateProspectResponse) {}
     rpc CreateProspectsBulk(CreateProspectsBulkRequest) returns (CreateProspectsBulkResponse) {}
     rpc TextSearchProspects(TextSearchRequest) returns (TextSearchProspectsResponse) {}
+    rpc DraftProspect(DraftProspectRequest) returns (DraftProspectResponse) {}
   }
   
   /*
@@ -73,6 +74,13 @@ service FantasyService {
       string DraftPickOverall= 4;
       string DraftPickInRound = 5;
       string ProspectID = 6;
+  }
+  
+  message DraftPick {
+      string DraftYear = 2;
+      string DraftRound= 3;
+      string DraftPickOverall= 4;
+      string DraftPickInRound = 5;
   }
   
   // League
@@ -209,6 +217,19 @@ service FantasyService {
     int64 status = 1;
     string error = 2;
     repeated string prospectIds = 3;
+  }
+
+  message DraftProspectRequest {
+    DraftPick DraftPick = 1;
+    string ProspectID = 2;
+    string FranchiseID = 3;
+    string LeagueID=4;
+  }
+
+  message DraftProspectResponse {
+    int64 status = 1;
+    string error = 2;
+    string pickID = 3;
   }
   
   // Picks

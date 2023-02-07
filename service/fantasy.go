@@ -479,35 +479,56 @@ func (s *Server) TextSearchProspects(ctx context.Context, req *pb.TextSearchRequ
 	}, nil
 }
 
-func (s *Server) CreateProspect(ctx context.Context, req *pb.CreateProspectRequest) (*pb.CreateProspectResponse, error) {
+func (s *Server) DraftProspect(ctx context.Context, req *pb.DraftProspectRequest) (*pb.DraftProspectResponse, error) {
+	var pick models.Pick
+	var pick2 models.Pick
 	var prospect models.Prospect
 
-	lId := uuid.MustParse(req.Prospect.LeagueID)
-	fId := uuid.MustParse(req.Prospect.FranchiseID)
+	lId := uuid.MustParse(req.LeagueID)
+	fId := uuid.MustParse(req.FranchiseID)
+	pId := uuid.MustParse(req.ProspectID)
 
-	if findProspect := s.R.DB.Where(&models.Prospect{FullName: req.Prospect.FullName, Birthdate: req.Prospect.Birthdate, LeagueID: &lId}).First(&prospect); findProspect.Error == nil {
-		return &pb.CreateProspectResponse{
+	if findPick := s.R.DB.Where(&models.Pick{DraftYear: req.DraftPick.DraftYear, DraftRound: req.DraftPick.DraftRound, DraftPickInRound: req.DraftPick.DraftPickInRound, DraftPickOverall: req.DraftPick.DraftPickOverall}).First(&pick); findPick.Error == nil {
+		return &pb.DraftProspectResponse{
 			Status: http.StatusConflict,
-			Error:  fmt.Sprintf("Prospect already exists in this league (%q)", req.Prospect.FullName),
+			Error:  fmt.Sprintf("Pick already exists in this league (%v)", findPick),
 		}, nil
 	}
 
-	prospect.FullName = req.Prospect.FullName
-	prospect.FirstName = req.Prospect.FirstName
-	prospect.LastName = req.Prospect.LastName
-	prospect.Birthdate = req.Prospect.Birthdate
+	if findPick := s.R.DB.Where(&models.Pick{ProspectID: pId}).First(&pick2); findPick.Error == nil {
+		return &pb.DraftProspectResponse{
+			Status: http.StatusConflict,
+			Error:  fmt.Sprintf("This ProspectID was already drafted (%v)", pId),
+		}, nil
+	}
+
+	pick.DraftYear = req.DraftPick.DraftYear
+	pick.DraftRound = req.DraftPick.DraftRound
+	pick.DraftPickInRound = req.DraftPick.DraftPickInRound
+	pick.DraftPickOverall = req.DraftPick.DraftPickOverall
+	pick.ProspectID = pId
+
+	if createPick := s.R.DB.Create(&pick); createPick.Error != nil {
+		return &pb.DraftProspectResponse{
+			Status: http.StatusForbidden,
+			Error:  fmt.Sprintf("Creating prospects failed %q", createPick.Error),
+		}, nil
+	}
+
+	if findProspect := s.R.DB.Where(&models.Prospect{ID: pId}).First(&prospect); findProspect.Error != nil {
+		return &pb.DraftProspectResponse{
+			Status: http.StatusConflict,
+			Error:  fmt.Sprintf("This ProspectID doest not exist and cannot be updated (%v)", pId),
+		}, nil
+	}
 	prospect.LeagueID = &lId
 	prospect.FranchiseID = &fId
 
-	if createProspect := s.R.DB.Create(&prospect); createProspect.Error != nil {
-		return &pb.CreateProspectResponse{
-			Status: http.StatusForbidden,
-			Error:  fmt.Sprintf("Creating prospects failed %q", createProspect.Error),
-		}, nil
-	}
+	s.R.DB.Save(&prospect)
 
-	return &pb.CreateProspectResponse{
-		Status:     http.StatusCreated,
-		ProspectID: prospect.ID.String(),
+	return &pb.DraftProspectResponse{
+		Status: http.StatusCreated,
+		PickID: pick.ID.String(),
 	}, nil
+
 }
