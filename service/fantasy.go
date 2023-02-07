@@ -415,7 +415,7 @@ func (s *Server) CreateProspectsBulk(ctx context.Context, req *pb.CreateProspect
 
 func (s *Server) TextSearchProspects(ctx context.Context, req *pb.TextSearchRequest) (*pb.TextSearchProspectsResponse, error) {
 
-	rows, err := s.R.DB.Raw(fmt.Sprintf("SELECT * FROM fantasy.prospects WHERE to_tsvector(full_name) @@ to_tsquery('%q')", req.Text)).Rows()
+	rows, err := s.R.DB.Model(&models.Prospect{}).Preload("LeagueID").Preload("FranchiseID").Preload("PickID").Raw(fmt.Sprintf("SELECT * FROM fantasy.prospects WHERE to_tsvector(full_name) @@ to_tsquery('%q')", req.Text)).Rows()
 	if err != nil {
 		return &pb.TextSearchProspectsResponse{
 			Status: http.StatusConflict,
@@ -429,6 +429,29 @@ func (s *Server) TextSearchProspects(ctx context.Context, req *pb.TextSearchRequ
 	for rows.Next() {
 		p := models.Prospect{}
 		s.R.DB.ScanRows(rows, &p)
+
+		var franchiseID string
+		if p.FranchiseID == nil {
+			franchiseID = ""
+		} else {
+			franchiseID = p.FranchiseID.String()
+		}
+		var leagueID string
+		if p.LeagueID == nil {
+			leagueID = ""
+		} else {
+			leagueID = p.LeagueID.String()
+		}
+
+		pick := &pb.Pick{
+			ID:               p.Pick.ID.String(),
+			DraftYear:        p.Pick.DraftYear,
+			DraftRound:       p.Pick.DraftRound,
+			DraftPickInRound: p.Pick.DraftPickInRound,
+			DraftPickOverall: p.Pick.DraftPickOverall,
+			ProspectID:       p.Pick.ProspectID.String(),
+		}
+
 		pp := &pb.Prospect{
 			ID:                  p.ID.String(),
 			FullName:            p.FullName,
@@ -443,9 +466,9 @@ func (s *Server) TextSearchProspects(ctx context.Context, req *pb.TextSearchRequ
 			NhlDraftRound:       p.NhlDraftRound,
 			NhlPickInRound:      p.NhlDraftPickInRound,
 			NhlDraftPickOverall: p.NhlDraftPickOverall,
-			LeagueID:            "p.LeagueID.String()",
-			FranchiseID:         "p.FranchiseID.String()",
-			PickID:              "",
+			LeagueID:            leagueID,
+			FranchiseID:         franchiseID,
+			Pick:                pick,
 		}
 		prospectsRes = append(prospectsRes, pp)
 	}
