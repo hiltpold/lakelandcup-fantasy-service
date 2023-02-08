@@ -13,7 +13,7 @@ type Pick struct {
 	DraftRound       string    `json:"draftRound" gorm:"type:integer"`
 	DraftPickOverall string    `json:"draftPickOverall" gorm:"type:integer"`
 	DraftPickInRound string    `json:"draftPickInRound" gorm:"type:integer"`
-	ProspectID       uuid.UUID `json:"prospectID" gorm:"foreignKey:PickID"`
+	ProspectID       uuid.UUID `json:"prospectID" gorm:"foreignKey:PickID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
 }

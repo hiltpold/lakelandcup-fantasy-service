@@ -17,6 +17,7 @@ service FantasyService {
     rpc CreateProspectsBulk(CreateProspectsBulkRequest) returns (CreateProspectsBulkResponse) {}
     rpc TextSearchProspects(TextSearchRequest) returns (TextSearchProspectsResponse) {}
     rpc DraftProspect(DraftProspectRequest) returns (DraftProspectResponse) {}
+    rpc UndraftProspect(DraftProspectRequest) returns (DraftProspectResponse) {}
   }
   
   /*

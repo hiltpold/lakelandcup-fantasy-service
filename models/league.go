@@ -19,8 +19,8 @@ type League struct {
 	MaxProspects      int         `json:"maxProspects" gorm:"not null;type:int"`
 	DraftRightsGoalie int         `json:"DraftRightsGoalie" gorm:"not null;type:int"`
 	DraftRightsSkater int         `json:"draftRightsSkater" gorm:"not null;type:int"`
-	Franchises        []Franchise `json:"franchises" gorm:"foreignKey:LeagueID"`
-	Prospects         []Prospect  `json:"prospects" gorm:"foreignKey:LeagueID"`
+	Franchises        []Franchise `json:"franchises" gorm:"foreignKey:LeagueID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	Prospects         []Prospect  `json:"prospects" gorm:"foreignKey:LeagueID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
 }

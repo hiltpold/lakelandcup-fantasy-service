@@ -532,3 +532,50 @@ func (s *Server) DraftProspect(ctx context.Context, req *pb.DraftProspectRequest
 	}, nil
 
 }
+
+func (s *Server) UndraftProspect(ctx context.Context, req *pb.DraftProspectRequest) (*pb.DraftProspectResponse, error) {
+	var pick models.Pick
+	var franchise models.Franchise
+	var prospect models.Prospect
+	var league models.League
+
+	lId := uuid.MustParse(req.LeagueID)
+	fId := uuid.MustParse(req.FranchiseID)
+	pId := uuid.MustParse(req.ProspectID)
+
+	s.R.DB.Where(&models.Prospect{ID: pId}).First(&prospect)
+
+	if findPick := s.R.DB.Where(&models.Pick{DraftYear: req.DraftPick.DraftYear, DraftRound: req.DraftPick.DraftRound, DraftPickInRound: req.DraftPick.DraftPickInRound, DraftPickOverall: req.DraftPick.DraftPickOverall, ProspectID: pId}).First(&pick); findPick.Error != nil {
+		return &pb.DraftProspectResponse{
+			Status: http.StatusConflict,
+			Error:  fmt.Sprintf("Pick does not exist in this league (%v)", pick.ID),
+		}, nil
+	}
+
+	if findProspect := s.R.DB.Where(&models.Prospect{ID: pId}).First(&prospect); findProspect.Error != nil {
+		return &pb.DraftProspectResponse{
+			Status: http.StatusConflict,
+			Error:  fmt.Sprintf("This ProspectID doest not exist and cannot be undrafted (%v)", pId),
+		}, nil
+	}
+
+	if fId != *prospect.FranchiseID {
+		return &pb.DraftProspectResponse{
+			Status: http.StatusConflict,
+			Error:  fmt.Sprintf("Prospect (%v) does not belong to this Franchise (%q).", pId, prospect.FranchiseID),
+		}, nil
+	}
+
+	s.R.DB.Preload("Franchises").Preload("Prospects").Preload("Franchises.Prospects").Where(&models.League{ID: lId}).First(&league)
+	s.R.DB.Preload("Prospects").Where(&models.Franchise{ID: fId}).First(&franchise)
+	s.R.DB.Model(&league).Association("Prospects").Delete(&prospect)
+	s.R.DB.Model(&franchise).Association("Prospects").Delete(&prospect)
+
+	s.R.DB.Model(&prospect).Association("Pick").Delete(&pick)
+	s.R.DB.Select("ProspectID").Delete(&pick)
+
+	return &pb.DraftProspectResponse{
+		Status: http.StatusCreated,
+		PickID: pick.ID.String(),
+	}, nil
+}

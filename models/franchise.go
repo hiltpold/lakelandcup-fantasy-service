@@ -13,8 +13,8 @@ type Franchise struct {
 	OwnerID        uuid.UUID  `json:"ownerId" gorm:"not null;type:uuid;"`
 	OwnerName      string     `json:"ownerName" gorm:"not null;type:string;"`
 	FoundationYear string     `json:"foundationYear" gorm:"not null;type:string"`
-	LeagueID       uuid.UUID  `json:"leagueId" gorm:"not null;foreignKey:FranchiseID"`
-	Prospects      []Prospect `json:"prospects" gorm:"foreignKey:FranchiseID"`
+	LeagueID       uuid.UUID  `json:"leagueId" gorm:"not null;foreignKey:FranchiseID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
+	Prospects      []Prospect `json:"prospects" gorm:"foreignKey:FranchiseID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 }
