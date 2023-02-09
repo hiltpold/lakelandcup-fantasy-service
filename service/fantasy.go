@@ -194,9 +194,9 @@ func (s *Server) GetLeagues(ctx context.Context, req *pb.GetLeaguesRequest) (*pb
 	s.R.DB.Preload("Franchises").Find(&leagues).Limit(1000)
 
 	for _, l := range leagues {
-		tmpFranchise := pb.Franchise{}
 		if len(l.Franchises) > 0 {
 			for _, f := range l.Franchises {
+				tmpFranchise := pb.Franchise{}
 				tmpFranchise.ID = f.ID.String()
 				tmpFranchise.OwnerID = f.OwnerID.String()
 				tmpFranchise.OwnerName = f.OwnerName
@@ -223,7 +223,9 @@ func (s *Server) GetLeagues(ctx context.Context, req *pb.GetLeaguesRequest) (*pb
 			Franchises:        franchisesRes,
 		}
 		leagueRes = append(leagueRes, &tmpLeague)
+
 	}
+	logrus.Info(leagueRes)
 	return &pb.GetLeaguesResponse{
 		Status: http.StatusAccepted,
 		Result: leagueRes,
@@ -507,6 +509,7 @@ func (s *Server) DraftProspect(ctx context.Context, req *pb.DraftProspectRequest
 	pick.DraftPickInRound = req.DraftPick.DraftPickInRound
 	pick.DraftPickOverall = req.DraftPick.DraftPickOverall
 	pick.ProspectID = pId
+	pick.FranchiseID = fId
 
 	if createPick := s.R.DB.Create(&pick); createPick.Error != nil {
 		return &pb.DraftProspectResponse{
@@ -570,12 +573,59 @@ func (s *Server) UndraftProspect(ctx context.Context, req *pb.DraftProspectReque
 	s.R.DB.Preload("Prospects").Where(&models.Franchise{ID: fId}).First(&franchise)
 	s.R.DB.Model(&league).Association("Prospects").Delete(&prospect)
 	s.R.DB.Model(&franchise).Association("Prospects").Delete(&prospect)
-
 	s.R.DB.Model(&prospect).Association("Pick").Delete(&pick)
-	s.R.DB.Select("ProspectID").Delete(&pick)
+	s.R.DB.Model(&franchise).Association("Picks").Delete(&pick)
 
 	return &pb.DraftProspectResponse{
 		Status: http.StatusCreated,
 		PickID: pick.ID.String(),
 	}, nil
 }
+
+/*
+func (s *Server) Trade(ctx context.Context, req *pb.TradeRequest) (*pb.TradeResponse, error) {
+	var pick models.Pick
+	var franchise models.Franchise
+	var prospect models.Prospect
+	var league models.League
+
+	lId := uuid.MustParse(req.LeagueID)
+	fId := uuid.MustParse(req.FranchiseID)
+	pId := uuid.MustParse(req.ProspectID)
+
+	s.R.DB.Where(&models.Prospect{ID: pId}).First(&prospect)
+
+	if findPick := s.R.DB.Where(&models.Pick{DraftYear: req.DraftPick.DraftYear, DraftRound: req.DraftPick.DraftRound, DraftPickInRound: req.DraftPick.DraftPickInRound, DraftPickOverall: req.DraftPick.DraftPickOverall, ProspectID: pId}).First(&pick); findPick.Error != nil {
+		return &pb.DraftProspectResponse{
+			Status: http.StatusConflict,
+			Error:  fmt.Sprintf("Pick does not exist in this league (%v)", pick.ID),
+		}, nil
+	}
+
+	if findProspect := s.R.DB.Where(&models.Prospect{ID: pId}).First(&prospect); findProspect.Error != nil {
+		return &pb.DraftProspectResponse{
+			Status: http.StatusConflict,
+			Error:  fmt.Sprintf("This ProspectID doest not exist and cannot be undrafted (%v)", pId),
+		}, nil
+	}
+
+	if fId != *prospect.FranchiseID {
+		return &pb.DraftProspectResponse{
+			Status: http.StatusConflict,
+			Error:  fmt.Sprintf("Prospect (%v) does not belong to this Franchise (%q).", pId, prospect.FranchiseID),
+		}, nil
+	}
+
+	s.R.DB.Preload("Franchises").Preload("Prospects").Preload("Franchises.Prospects").Where(&models.League{ID: lId}).First(&league)
+	s.R.DB.Preload("Prospects").Where(&models.Franchise{ID: fId}).First(&franchise)
+	s.R.DB.Model(&league).Association("Prospects").Delete(&prospect)
+	s.R.DB.Model(&franchise).Association("Prospects").Delete(&prospect)
+	s.R.DB.Model(&prospect).Association("Pick").Delete(&pick)
+	s.R.DB.Model(&franchise).Association("Picks").Delete(&pick)
+
+	return &pb.DraftProspectResponse{
+		Status: http.StatusCreated,
+		PickID: pick.ID.String(),
+	}, nil
+}
+*/
