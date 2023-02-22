@@ -10,11 +10,13 @@ import (
 	"github.com/hiltpold/lakelandcup-fantasy-service/service/pb"
 	"github.com/hiltpold/lakelandcup-fantasy-service/storage"
 	"github.com/sirupsen/logrus"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type Server struct {
 	R storage.Repository
-	// #https://github.com/grpc/grpc-go/issues/3794:
+	// https://github.com/grpc/grpc-go/issues/3794:
 	pb.UnimplementedFantasyServiceServer
 }
 
@@ -37,6 +39,8 @@ func (s *Server) CreateLeague(ctx context.Context, req *pb.LeagueRequest) (*pb.L
 		}, nil
 	}
 
+	// TODO: Error Handling MustParse
+
 	league.Name = req.Name
 	league.Admin = req.Admin
 	league.AdminID = uuid.MustParse(req.AdminID)
@@ -47,6 +51,7 @@ func (s *Server) CreateLeague(ctx context.Context, req *pb.LeagueRequest) (*pb.L
 	league.MaxProspects = int(req.MaxProspects)
 	league.DraftRightsGoalie = int(req.DraftRightsGoalie)
 	league.DraftRightsSkater = int(req.DraftRightsSkater)
+	league.DraftRounds = int(req.DraftRounds)
 	league.Franchises = []models.Franchise{}
 
 	if createLeague := s.R.DB.Create(&league); createLeague.Error != nil {
@@ -64,17 +69,15 @@ func (s *Server) CreateLeague(ctx context.Context, req *pb.LeagueRequest) (*pb.L
 
 func (s *Server) UpdateLeague(ctx context.Context, req *pb.LeagueUpdateRequest) (*pb.LeagueResponse, error) {
 	var league models.League
-	//const leagueName = "Lakelandcup"
+	const leagueName = "Lakelandcup"
 
 	// check if league already exists
-	if findLeague := s.R.DB.Where(&models.League{ID: uuid.MustParse(req.Id)}).First(&league); findLeague.Error != nil {
+	if findLeague := s.R.DB.Where(&models.League{ID: uuid.MustParse(req.Id), Name: leagueName}).First(&league); findLeague.Error != nil {
 		return &pb.LeagueResponse{
 			Status: http.StatusConflict,
-			Error:  "League does't exists",
+			Error:  fmt.Sprintf("League does't exists or is not called %q", leagueName),
 		}, nil
 	}
-
-	logrus.Info(req)
 
 	league.ID = uuid.MustParse(req.Id)
 	league.Name = req.League.Name
@@ -87,6 +90,7 @@ func (s *Server) UpdateLeague(ctx context.Context, req *pb.LeagueUpdateRequest) 
 	league.MaxProspects = int(req.League.MaxProspects)
 	league.DraftRightsGoalie = int(req.League.DraftRightsGoalie)
 	league.DraftRightsSkater = int(req.League.DraftRightsSkater)
+	league.DraftRounds = int(req.League.DraftRounds)
 	league.Franchises = []models.Franchise{}
 
 	if updateLeague := s.R.DB.Save(&league); updateLeague.Error != nil {
@@ -99,32 +103,6 @@ func (s *Server) UpdateLeague(ctx context.Context, req *pb.LeagueUpdateRequest) 
 	return &pb.LeagueResponse{
 		Status:   http.StatusCreated,
 		LeagueId: league.ID.String(),
-	}, nil
-}
-
-func (s *Server) GetLeagueFranchisePairs(ctx context.Context, req *pb.GetLeagueFranchisePairsRequest) (*pb.GetLeagueFranchisePairsResponse, error) {
-	var leagues []models.League
-	var res []*pb.LeagueFranchisePair
-
-	s.R.DB.Preload("Franchises").Find(&leagues)
-
-	for _, l := range leagues {
-		if len(l.Franchises) > 0 {
-			for _, f := range l.Franchises {
-				if f.OwnerID.String() == req.UserId {
-					res = append(res, &pb.LeagueFranchisePair{LeagueID: f.LeagueID.String(), FranchiseID: f.ID.String()})
-				}
-			}
-		} else {
-			if l.AdminID.String() == req.UserId {
-				res = append(res, &pb.LeagueFranchisePair{LeagueID: l.ID.String(), FranchiseID: ""})
-			}
-		}
-	}
-
-	return &pb.GetLeagueFranchisePairsResponse{
-		Status: http.StatusAccepted,
-		Result: res,
 	}, nil
 }
 
@@ -164,6 +142,7 @@ func (s *Server) GetLeague(ctx context.Context, req *pb.GetLeagueRequest) (*pb.G
 	} else {
 		franchisesRes = append(franchisesRes, &pb.Franchise{})
 	}
+
 	leagueRes = &pb.League{
 		ID:                league.ID.String(),
 		Name:              league.Name,
@@ -284,19 +263,19 @@ func (s *Server) GetFranchise(ctx context.Context, req *pb.GetFranchiseRequest) 
 	var franchiseRes *pb.Franchise
 	var prospectRes []*pb.Prospect
 
-	findFranchise := s.R.DB.Preload("Prospects").First(&franchise, "id = ?", req.FranchiseId)
+	findFranchise := s.R.DB.Preload("Prospects").First(&franchise, "id = ?", req.FranchiseID)
 
 	if findFranchise.Error != nil {
 		return &pb.GetFranchiseResponse{
 			Status: http.StatusConflict,
-			Error:  fmt.Sprintf("Getting franchiseId (%s) failed: %v", req.FranchiseId, findFranchise.Error),
+			Error:  fmt.Sprintf("Getting franchiseId (%s) failed: %v", req.FranchiseID, findFranchise.Error),
 		}, nil
 	}
 
 	if findFranchise.RowsAffected == 0 {
 		return &pb.GetFranchiseResponse{
 			Status: http.StatusConflict,
-			Error:  fmt.Sprintf("franchiseId (%s) does not exist", req.FranchiseId),
+			Error:  fmt.Sprintf("franchiseId (%s) does not exist", req.FranchiseID),
 		}, nil
 
 	}
@@ -381,7 +360,7 @@ func (s *Server) CreateProspectsBulk(ctx context.Context, req *pb.CreateProspect
 
 	for _, pReq := range req.Prospects {
 		var prospect models.Prospect
-		if findProspect := s.R.DB.Where(&models.Prospect{FullName: pReq.FullName, Birthdate: pReq.Birthdate, DraftYear: pReq.DraftYear, NhlDraftPickOverall: pReq.NhlDraftPickOverall}).First(&prospect); findProspect.Error != nil {
+		if findProspect := s.R.DB.Where(&models.Prospect{FullName: pReq.FullName, Birthdate: pReq.Birthdate, NhlDraftYear: pReq.DraftYear, NhlDraftPickOverall: pReq.NhlDraftPickOverall}).First(&prospect); findProspect.Error != nil {
 			prospect.FullName = pReq.FullName
 			prospect.FirstName = pReq.FirstName
 			prospect.LastName = pReq.LastName
@@ -389,7 +368,7 @@ func (s *Server) CreateProspectsBulk(ctx context.Context, req *pb.CreateProspect
 			prospect.Birthdate = pReq.Birthdate
 			prospect.Height = pReq.Height
 			prospect.Weight = pReq.Weight
-			prospect.DraftYear = pReq.DraftYear
+			prospect.NhlDraftYear = pReq.DraftYear
 			prospect.NhlDraftRound = pReq.NhlDraftRound
 			prospect.NhlDraftPickInRound = pReq.NhlDraftPickInRound
 			prospect.NhlDraftPickOverall = pReq.NhlDraftPickOverall
@@ -432,19 +411,6 @@ func (s *Server) TextSearchProspects(ctx context.Context, req *pb.TextSearchRequ
 		p := models.Prospect{}
 		s.R.DB.ScanRows(rows, &p)
 
-		var franchiseID string
-		if p.FranchiseID == nil {
-			franchiseID = ""
-		} else {
-			franchiseID = p.FranchiseID.String()
-		}
-		var leagueID string
-		if p.LeagueID == nil {
-			leagueID = ""
-		} else {
-			leagueID = p.LeagueID.String()
-		}
-
 		pick := &pb.Pick{
 			ID:               p.Pick.ID.String(),
 			DraftYear:        p.Pick.DraftYear,
@@ -464,12 +430,12 @@ func (s *Server) TextSearchProspects(ctx context.Context, req *pb.TextSearchRequ
 			Height:              p.Height,
 			Weight:              p.Weight,
 			PositionCode:        p.PositionCode,
-			DraftYear:           p.DraftYear,
+			NhlDraftYear:        p.NhlDraftYear,
 			NhlDraftRound:       p.NhlDraftRound,
 			NhlPickInRound:      p.NhlDraftPickInRound,
 			NhlDraftPickOverall: p.NhlDraftPickOverall,
-			LeagueID:            leagueID,
-			FranchiseID:         franchiseID,
+			LeagueID:            p.LeagueID.String(),
+			FranchiseID:         p.FranchiseID.String(),
 			Pick:                pick,
 		}
 		prospectsRes = append(prospectsRes, pp)
@@ -480,6 +446,132 @@ func (s *Server) TextSearchProspects(ctx context.Context, req *pb.TextSearchRequ
 		Prospects: prospectsRes,
 	}, nil
 }
+
+func (s *Server) GetPicks(ctx context.Context, req *pb.GetFranchiseRequest) (*pb.GetPicksResponse, error) {
+	var picks []models.Pick
+
+	fId := uuid.MustParse(req.FranchiseID)
+
+	if findPicks := s.R.DB.Preload("Owner").Where("owner.id = ", fId).Find(&picks).Limit(1000); findPicks.Error == nil {
+		return &pb.GetPicksResponse{
+			Status: http.StatusForbidden,
+			Error:  fmt.Sprintf("Creating prospects failed %q", findPicks.Error),
+		}, nil
+	}
+
+	picksRes := []*pb.Pick{}
+	for _, p := range picks {
+		picksRes = append(picksRes, &pb.Pick{
+			ID:               p.ID.String(),
+			DraftYear:        p.DraftYear,
+			DraftRound:       p.DraftRound,
+			DraftPickInRound: p.DraftPickInRound,
+			DraftPickOverall: p.DraftPickOverall,
+			ProspectID:       p.ProspectID.String(),
+			OwnerID:          p.OwnerID.String(),
+			OwnerName:        p.OwnerName,
+			LastOwnerID:      p.LastOwnerID.String(),
+			LastOwnerName:    p.LastOwnerName,
+			OriginID:         p.OriginID.String(),
+			OriginName:       p.OriginName,
+		})
+	}
+
+	return &pb.GetPicksResponse{
+		Status: http.StatusOK,
+		Picks:  picksRes,
+	}, nil
+
+}
+
+func (s *Server) Trade(ctx context.Context, req *pb.TradeRequest) (*pb.TradeResponse, error) {
+	/*
+		var picks []models.Pick
+		fromFranchiseID := uuid.MustParse(req.FromFranchiseID)
+		toFranchiseID := uuid.MustParse(req.ToFranchiseID)
+	*/
+
+	var transaction = s.R.DB.Transaction(func(tx *gorm.DB) error {
+		// handle picks
+		var picks = []models.Pick{}
+		for _, p := range req.Picks {
+			picks = append(picks, models.Pick{
+				DraftYear:        p.DraftYear,
+				DraftRound:       p.DraftRound,
+				DraftPickInRound: p.DraftPickInRound,
+				DraftPickOverall: p.DraftPickOverall,
+				ProspectID:       uuid.MustParse(p.ProspectID),
+				OwnerID:          uuid.MustParse(p.OwnerID),
+				OwnerName:        p.OriginName,
+				LastOwnerID:      uuid.MustParse(p.LastOwnerID),
+				LastOwnerName:    p.LastOwnerName,
+				OriginID:         uuid.MustParse(p.OriginID),
+				OriginName:       p.OriginName,
+			})
+
+		}
+
+		// Update columns to new value on `id` conflict
+		createOrUpdatePicks := s.R.DB.Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "draft_year"}, {Name: "draft_round"}, {Name: "draft_pick_in_round"}, {Name: "draft_pick_overall"}, {Name: "origin_id"}, {Name: "origin_name"}}, // key colume
+			DoUpdates: clause.AssignmentColumns([]string{"prospect_id", "owner_id", "owner_name", "last_owner_id", "last_owner_name"}),                                                       // column needed to be updated
+		}).Create(&picks)
+
+		if createOrUpdatePicks.Error != nil {
+			return createOrUpdatePicks.Error
+		}
+
+		// handle prospects
+		var prospects = []models.Prospect{}
+		for _, p := range req.Prospects {
+
+			prospects = append(prospects, models.Prospect{
+				FullName:            p.FullName,
+				FirstName:           p.FirstName,
+				LastName:            p.LastName,
+				NhlTeam:             p.NhlTeam,
+				Birthdate:           p.Birthdate,
+				Height:              p.Height,
+				Weight:              p.Weight,
+				NhlDraftYear:        p.NhlDraftYear,
+				NhlDraftRound:       p.NhlDraftRound,
+				NhlDraftPickInRound: p.NhlPickInRound,
+				NhlDraftPickOverall: p.NhlDraftPickOverall,
+				PositionCode:        p.PositionCode,
+				LeagueID:            uuid.MustParse(p.LeagueID),
+				FranchiseID:         uuid.MustParse(p.FranchiseID),
+			})
+		}
+
+		// Update columns to new value on `id` conflict
+		createOrUpdateProspects := s.R.DB.Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "full_name"}, {Name: "first_name"}, {Name: "last_name"}, {Name: "nhl_team"}, {Name: "birthdate"}, {Name: "league_id"}, {Name: "franchise_id"}}, // key colume
+			DoUpdates: clause.AssignmentColumns([]string{"franchise_id"}),                                                                                                                    // column needed to be updated
+		}).Create(&prospects)
+
+		if createOrUpdateProspects.Error != nil {
+			return createOrUpdatePicks.Error
+		}
+
+		// return nil will commit the whole transaction
+		return nil
+	})
+
+	if transaction != nil {
+		return &pb.TradeResponse{
+			Status: http.StatusOK,
+			Error:  transaction.Error(),
+		}, nil
+
+	}
+
+	return &pb.TradeResponse{
+		Status: http.StatusOK,
+	}, nil
+
+}
+
+/*
 
 func (s *Server) DraftProspect(ctx context.Context, req *pb.DraftProspectRequest) (*pb.DraftProspectResponse, error) {
 	var pick models.Pick
@@ -509,7 +601,7 @@ func (s *Server) DraftProspect(ctx context.Context, req *pb.DraftProspectRequest
 	pick.DraftPickInRound = req.DraftPick.DraftPickInRound
 	pick.DraftPickOverall = req.DraftPick.DraftPickOverall
 	pick.ProspectID = pId
-	pick.FranchiseID = fId
+	pick.Owner = fId
 
 	if createPick := s.R.DB.Create(&pick); createPick.Error != nil {
 		return &pb.DraftProspectResponse{
@@ -581,7 +673,7 @@ func (s *Server) UndraftProspect(ctx context.Context, req *pb.DraftProspectReque
 		PickID: pick.ID.String(),
 	}, nil
 }
-
+*/
 /*
 func (s *Server) Trade(ctx context.Context, req *pb.TradeRequest) (*pb.TradeResponse, error) {
 	var pick models.Pick

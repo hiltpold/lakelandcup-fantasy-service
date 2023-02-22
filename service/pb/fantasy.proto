@@ -10,14 +10,17 @@ service FantasyService {
     rpc GetLeague(GetLeagueRequest) returns (GetLeagueResponse) {}
     rpc UpdateLeague(LeagueUpdateRequest) returns (LeagueResponse) {}
     rpc GetLeagueFranchises(GetLeagueRequest) returns (GetLeagueFranchisesResponse) {}
-    rpc GetLeagueFranchisePairs(GetLeagueFranchisePairsRequest) returns (GetLeagueFranchisePairsResponse) {}
     rpc CreateFranchise(FranchiseRequest) returns (FranchiseResponse) {}
     rpc GetFranchise(GetFranchiseRequest) returns (GetFranchiseResponse) {}
     rpc CreateProspect(CreateProspectRequest) returns (CreateProspectResponse) {}
     rpc CreateProspectsBulk(CreateProspectsBulkRequest) returns (CreateProspectsBulkResponse) {}
     rpc TextSearchProspects(TextSearchRequest) returns (TextSearchProspectsResponse) {}
+    rpc GetPicks(GetFranchiseRequest) returns (GetPicksResponse) {}
+    rpc Trade(TradeRequest) returns (TradeResponse) {}
+    //
     rpc DraftProspect(DraftProspectRequest) returns (DraftProspectResponse) {}
     rpc UndraftProspect(DraftProspectRequest) returns (DraftProspectResponse) {}
+    rpc GetLeagueFranchisePairs(GetLeagueFranchisePairsRequest) returns (GetLeagueFranchisePairsResponse) {}
   }
   
   /*
@@ -36,7 +39,8 @@ service FantasyService {
     int32 MaxProspects = 9;
     int32 DraftRightsGoalie = 10;
     int32 DraftRightsSkater = 11;
-    repeated Franchise Franchises = 12;
+    int32 DraftRounds = 12;
+    repeated Franchise Franchises = 13;
   }
   
   message Franchise {
@@ -55,7 +59,7 @@ service FantasyService {
       string FirstName = 3;
       string LastName = 4;
       string NhlTeam = 5;
-      string DraftYear = 6;
+      string NhlDraftYear = 6;
       string Birthdate = 7;
       string Height = 8;
       string Weight = 9;
@@ -67,7 +71,7 @@ service FantasyService {
       string FranchiseID = 15;
       Pick Pick = 16;
   }
-  
+	
   message Pick {
       string ID = 1;
       string DraftYear = 2;
@@ -75,6 +79,12 @@ service FantasyService {
       string DraftPickOverall= 4;
       string DraftPickInRound = 5;
       string ProspectID = 6;
+      string OwnerID = 7;
+      string OwnerName = 8;
+      string LastOwnerID = 9;
+      string LastOwnerName = 10;
+      string OriginID =11;
+      string OriginName =12;
   }
   
   message DraftPick {
@@ -98,6 +108,7 @@ service FantasyService {
     int32 MaxProspects = 8;
     int32 DraftRightsGoalie = 9;
     int32 DraftRightsSkater = 10;
+    int32 DraftRounds = 11;
   }
   
   // update
@@ -175,7 +186,7 @@ service FantasyService {
   
   // get single league
   message GetFranchiseRequest{
-      string FranchiseId = 1;
+      string FranchiseID = 1;
   }
   
   message GetFranchiseResponse {
@@ -235,6 +246,25 @@ service FantasyService {
   
   // Picks
 
+  message GetPicksResponse {
+    int64 status = 1;
+    string error = 2;
+    repeated Pick picks = 3;
+  }
+
+  // Trade 
+
+  message TradeRequest {
+    string FromFranchiseID = 1;
+    string ToFranchiseID = 2;
+    repeated Pick Picks = 3;
+    repeated Prospect Prospects = 4;
+  }
+  
+  message TradeResponse {
+    int64 status = 1;
+    string error = 2;
+  }
 
   // Query
   

@@ -8,7 +8,7 @@ import (
 )
 
 type League struct {
-	ID                uuid.UUID   `json:"leagueId" gorm:"primaryKey"`
+	ID                uuid.UUID   `json:"leagueID" gorm:"primaryKey"`
 	Name              string      `json:"name" gorm:"not null;type:string"`
 	Admin             string      `json:"admin" gorm:"not null;type:string"`
 	AdminID           uuid.UUID   `json:"userId" gorm:"not null;type:uuid"`
@@ -19,6 +19,7 @@ type League struct {
 	MaxProspects      int         `json:"maxProspects" gorm:"not null;type:int"`
 	DraftRightsGoalie int         `json:"DraftRightsGoalie" gorm:"not null;type:int"`
 	DraftRightsSkater int         `json:"draftRightsSkater" gorm:"not null;type:int"`
+	DraftRounds       int         `json:"draftRounds" gorm:"not null;type:int;default:2;"`
 	Franchises        []Franchise `json:"franchises" gorm:"foreignKey:LeagueID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 	Prospects         []Prospect  `json:"prospects" gorm:"foreignKey:LeagueID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 	CreatedAt         time.Time

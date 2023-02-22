@@ -14,8 +14,15 @@ type Pick struct {
 	DraftPickOverall string    `json:"draftPickOverall" gorm:"type:integer"`
 	DraftPickInRound string    `json:"draftPickInRound" gorm:"type:integer"`
 	ProspectID       uuid.UUID `json:"prospectID" gorm:"foreignKey:PickID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
+	OwnerID          uuid.UUID `json:"ownerID" gorm:"foreignKey:PickID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
+	OwnerName        string    `json:"ownerName" gorm:"type:string"`
+	LastOwnerID      uuid.UUID `json:"lastOwnerID" gorm:"foreignKey:PickID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
+	LastOwnerName    string    `json:"lastOwnerName" gorm:"type:string"`
+	OriginID         uuid.UUID `json:"originID" gorm:"foreignKey:PickID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
+	OriginName       string    `json:"originName" gorm:"type:string"`
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
+	DeletedAt        time.Time
 }
 
 func (pick *Pick) BeforeCreate(db *gorm.DB) error {

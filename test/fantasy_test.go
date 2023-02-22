@@ -478,7 +478,7 @@ func TestGetFranchise(t *testing.T) {
 	t.Logf("%+v", fResp)
 	t.Log("----------------------------")
 
-	getFranchiseReq := pb.GetFranchiseRequest{FranchiseId: fResp.FranchiseId}
+	getFranchiseReq := pb.GetFranchiseRequest{FranchiseID: fResp.FranchiseId}
 	resp, err := client.GetFranchise(ctx, &getFranchiseReq)
 	if err != nil {
 		t.Fatalf("Get league failed: %v", err)
@@ -499,9 +499,10 @@ func TestGetFranchise(t *testing.T) {
 	db.Where("franchise_owner = ?", userId).Delete(&models.Franchise{})
 	db.Where("league_founder = ?", userId).Delete(&models.League{})
 }
+
 /*
 // Prospects
-func TestCreateUndraftedProspects(t *testing.T) {
+func TestTradePick(t *testing.T) {
 	// Create League 1
 	lResp, lErr := createLeague(userId, leagueName, foundationYear, maxFranchises, maxProspects, draftRightsGoalie, draftRightsSkater)
 	if lErr != nil {
@@ -530,7 +531,7 @@ func TestCreateUndraftedProspects(t *testing.T) {
 
 	prospects := []*pb.Prospect{{FullName: "Max Muster", FirstName: "Max", LastName: "Muster", Birthdate: "2023-01-01"}, {FullName: "John Doe", FirstName: "Jon", LastName: "Doe", Birthdate: "2023-01-01"}}
 
-	createUndraftedProspectsReq := pb.CreateUndraftedProspectsRequest{Prospects: prospects}
+	createUndraftedProspectsReq := pb.ProspectsRequest{Prospects: prospects}
 	resp, err := client.CreateUndraftedProspects(ctx, &createUndraftedProspectsReq)
 
 	if err != nil {

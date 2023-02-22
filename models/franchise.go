@@ -15,6 +15,7 @@ type Franchise struct {
 	FoundationYear string     `json:"foundationYear" gorm:"not null;type:string"`
 	LeagueID       uuid.UUID  `json:"leagueId" gorm:"not null;foreignKey:FranchiseID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 	Prospects      []Prospect `json:"prospects" gorm:"foreignKey:FranchiseID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
+	Picks          []Pick     `json:"picks" gorm:"foreignKey:FranchiseID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 }

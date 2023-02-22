@@ -27,14 +27,17 @@ type FantasyServiceClient interface {
 	GetLeague(ctx context.Context, in *GetLeagueRequest, opts ...grpc.CallOption) (*GetLeagueResponse, error)
 	UpdateLeague(ctx context.Context, in *LeagueUpdateRequest, opts ...grpc.CallOption) (*LeagueResponse, error)
 	GetLeagueFranchises(ctx context.Context, in *GetLeagueRequest, opts ...grpc.CallOption) (*GetLeagueFranchisesResponse, error)
-	GetLeagueFranchisePairs(ctx context.Context, in *GetLeagueFranchisePairsRequest, opts ...grpc.CallOption) (*GetLeagueFranchisePairsResponse, error)
 	CreateFranchise(ctx context.Context, in *FranchiseRequest, opts ...grpc.CallOption) (*FranchiseResponse, error)
 	GetFranchise(ctx context.Context, in *GetFranchiseRequest, opts ...grpc.CallOption) (*GetFranchiseResponse, error)
 	CreateProspect(ctx context.Context, in *CreateProspectRequest, opts ...grpc.CallOption) (*CreateProspectResponse, error)
 	CreateProspectsBulk(ctx context.Context, in *CreateProspectsBulkRequest, opts ...grpc.CallOption) (*CreateProspectsBulkResponse, error)
 	TextSearchProspects(ctx context.Context, in *TextSearchRequest, opts ...grpc.CallOption) (*TextSearchProspectsResponse, error)
+	GetPicks(ctx context.Context, in *GetFranchiseRequest, opts ...grpc.CallOption) (*GetPicksResponse, error)
+	Trade(ctx context.Context, in *TradeRequest, opts ...grpc.CallOption) (*TradeResponse, error)
+	//
 	DraftProspect(ctx context.Context, in *DraftProspectRequest, opts ...grpc.CallOption) (*DraftProspectResponse, error)
 	UndraftProspect(ctx context.Context, in *DraftProspectRequest, opts ...grpc.CallOption) (*DraftProspectResponse, error)
+	GetLeagueFranchisePairs(ctx context.Context, in *GetLeagueFranchisePairsRequest, opts ...grpc.CallOption) (*GetLeagueFranchisePairsResponse, error)
 }
 
 type fantasyServiceClient struct {
@@ -90,15 +93,6 @@ func (c *fantasyServiceClient) GetLeagueFranchises(ctx context.Context, in *GetL
 	return out, nil
 }
 
-func (c *fantasyServiceClient) GetLeagueFranchisePairs(ctx context.Context, in *GetLeagueFranchisePairsRequest, opts ...grpc.CallOption) (*GetLeagueFranchisePairsResponse, error) {
-	out := new(GetLeagueFranchisePairsResponse)
-	err := c.cc.Invoke(ctx, "/fantasy.FantasyService/GetLeagueFranchisePairs", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *fantasyServiceClient) CreateFranchise(ctx context.Context, in *FranchiseRequest, opts ...grpc.CallOption) (*FranchiseResponse, error) {
 	out := new(FranchiseResponse)
 	err := c.cc.Invoke(ctx, "/fantasy.FantasyService/CreateFranchise", in, out, opts...)
@@ -144,6 +138,24 @@ func (c *fantasyServiceClient) TextSearchProspects(ctx context.Context, in *Text
 	return out, nil
 }
 
+func (c *fantasyServiceClient) GetPicks(ctx context.Context, in *GetFranchiseRequest, opts ...grpc.CallOption) (*GetPicksResponse, error) {
+	out := new(GetPicksResponse)
+	err := c.cc.Invoke(ctx, "/fantasy.FantasyService/GetPicks", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fantasyServiceClient) Trade(ctx context.Context, in *TradeRequest, opts ...grpc.CallOption) (*TradeResponse, error) {
+	out := new(TradeResponse)
+	err := c.cc.Invoke(ctx, "/fantasy.FantasyService/Trade", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *fantasyServiceClient) DraftProspect(ctx context.Context, in *DraftProspectRequest, opts ...grpc.CallOption) (*DraftProspectResponse, error) {
 	out := new(DraftProspectResponse)
 	err := c.cc.Invoke(ctx, "/fantasy.FantasyService/DraftProspect", in, out, opts...)
@@ -162,6 +174,15 @@ func (c *fantasyServiceClient) UndraftProspect(ctx context.Context, in *DraftPro
 	return out, nil
 }
 
+func (c *fantasyServiceClient) GetLeagueFranchisePairs(ctx context.Context, in *GetLeagueFranchisePairsRequest, opts ...grpc.CallOption) (*GetLeagueFranchisePairsResponse, error) {
+	out := new(GetLeagueFranchisePairsResponse)
+	err := c.cc.Invoke(ctx, "/fantasy.FantasyService/GetLeagueFranchisePairs", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FantasyServiceServer is the server API for FantasyService service.
 // All implementations must embed UnimplementedFantasyServiceServer
 // for forward compatibility
@@ -171,14 +192,17 @@ type FantasyServiceServer interface {
 	GetLeague(context.Context, *GetLeagueRequest) (*GetLeagueResponse, error)
 	UpdateLeague(context.Context, *LeagueUpdateRequest) (*LeagueResponse, error)
 	GetLeagueFranchises(context.Context, *GetLeagueRequest) (*GetLeagueFranchisesResponse, error)
-	GetLeagueFranchisePairs(context.Context, *GetLeagueFranchisePairsRequest) (*GetLeagueFranchisePairsResponse, error)
 	CreateFranchise(context.Context, *FranchiseRequest) (*FranchiseResponse, error)
 	GetFranchise(context.Context, *GetFranchiseRequest) (*GetFranchiseResponse, error)
 	CreateProspect(context.Context, *CreateProspectRequest) (*CreateProspectResponse, error)
 	CreateProspectsBulk(context.Context, *CreateProspectsBulkRequest) (*CreateProspectsBulkResponse, error)
 	TextSearchProspects(context.Context, *TextSearchRequest) (*TextSearchProspectsResponse, error)
+	GetPicks(context.Context, *GetFranchiseRequest) (*GetPicksResponse, error)
+	Trade(context.Context, *TradeRequest) (*TradeResponse, error)
+	//
 	DraftProspect(context.Context, *DraftProspectRequest) (*DraftProspectResponse, error)
 	UndraftProspect(context.Context, *DraftProspectRequest) (*DraftProspectResponse, error)
+	GetLeagueFranchisePairs(context.Context, *GetLeagueFranchisePairsRequest) (*GetLeagueFranchisePairsResponse, error)
 	mustEmbedUnimplementedFantasyServiceServer()
 }
 
@@ -201,9 +225,6 @@ func (UnimplementedFantasyServiceServer) UpdateLeague(context.Context, *LeagueUp
 func (UnimplementedFantasyServiceServer) GetLeagueFranchises(context.Context, *GetLeagueRequest) (*GetLeagueFranchisesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetLeagueFranchises not implemented")
 }
-func (UnimplementedFantasyServiceServer) GetLeagueFranchisePairs(context.Context, *GetLeagueFranchisePairsRequest) (*GetLeagueFranchisePairsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetLeagueFranchisePairs not implemented")
-}
 func (UnimplementedFantasyServiceServer) CreateFranchise(context.Context, *FranchiseRequest) (*FranchiseResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateFranchise not implemented")
 }
@@ -219,11 +240,20 @@ func (UnimplementedFantasyServiceServer) CreateProspectsBulk(context.Context, *C
 func (UnimplementedFantasyServiceServer) TextSearchProspects(context.Context, *TextSearchRequest) (*TextSearchProspectsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method TextSearchProspects not implemented")
 }
+func (UnimplementedFantasyServiceServer) GetPicks(context.Context, *GetFranchiseRequest) (*GetPicksResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPicks not implemented")
+}
+func (UnimplementedFantasyServiceServer) Trade(context.Context, *TradeRequest) (*TradeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Trade not implemented")
+}
 func (UnimplementedFantasyServiceServer) DraftProspect(context.Context, *DraftProspectRequest) (*DraftProspectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DraftProspect not implemented")
 }
 func (UnimplementedFantasyServiceServer) UndraftProspect(context.Context, *DraftProspectRequest) (*DraftProspectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UndraftProspect not implemented")
+}
+func (UnimplementedFantasyServiceServer) GetLeagueFranchisePairs(context.Context, *GetLeagueFranchisePairsRequest) (*GetLeagueFranchisePairsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetLeagueFranchisePairs not implemented")
 }
 func (UnimplementedFantasyServiceServer) mustEmbedUnimplementedFantasyServiceServer() {}
 
@@ -328,24 +358,6 @@ func _FantasyService_GetLeagueFranchises_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
-func _FantasyService_GetLeagueFranchisePairs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetLeagueFranchisePairsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(FantasyServiceServer).GetLeagueFranchisePairs(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/fantasy.FantasyService/GetLeagueFranchisePairs",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FantasyServiceServer).GetLeagueFranchisePairs(ctx, req.(*GetLeagueFranchisePairsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _FantasyService_CreateFranchise_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(FranchiseRequest)
 	if err := dec(in); err != nil {
@@ -436,6 +448,42 @@ func _FantasyService_TextSearchProspects_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FantasyService_GetPicks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetFranchiseRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FantasyServiceServer).GetPicks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/fantasy.FantasyService/GetPicks",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FantasyServiceServer).GetPicks(ctx, req.(*GetFranchiseRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FantasyService_Trade_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TradeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FantasyServiceServer).Trade(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/fantasy.FantasyService/Trade",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FantasyServiceServer).Trade(ctx, req.(*TradeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _FantasyService_DraftProspect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DraftProspectRequest)
 	if err := dec(in); err != nil {
@@ -472,6 +520,24 @@ func _FantasyService_UndraftProspect_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FantasyService_GetLeagueFranchisePairs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetLeagueFranchisePairsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FantasyServiceServer).GetLeagueFranchisePairs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/fantasy.FantasyService/GetLeagueFranchisePairs",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FantasyServiceServer).GetLeagueFranchisePairs(ctx, req.(*GetLeagueFranchisePairsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // FantasyService_ServiceDesc is the grpc.ServiceDesc for FantasyService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -500,10 +566,6 @@ var FantasyService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _FantasyService_GetLeagueFranchises_Handler,
 		},
 		{
-			MethodName: "GetLeagueFranchisePairs",
-			Handler:    _FantasyService_GetLeagueFranchisePairs_Handler,
-		},
-		{
 			MethodName: "CreateFranchise",
 			Handler:    _FantasyService_CreateFranchise_Handler,
 		},
@@ -524,12 +586,24 @@ var FantasyService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _FantasyService_TextSearchProspects_Handler,
 		},
 		{
+			MethodName: "GetPicks",
+			Handler:    _FantasyService_GetPicks_Handler,
+		},
+		{
+			MethodName: "Trade",
+			Handler:    _FantasyService_Trade_Handler,
+		},
+		{
 			MethodName: "DraftProspect",
 			Handler:    _FantasyService_DraftProspect_Handler,
 		},
 		{
 			MethodName: "UndraftProspect",
 			Handler:    _FantasyService_UndraftProspect_Handler,
+		},
+		{
+			MethodName: "GetLeagueFranchisePairs",
+			Handler:    _FantasyService_GetLeagueFranchisePairs_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
