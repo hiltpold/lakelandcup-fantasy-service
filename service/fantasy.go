@@ -132,8 +132,8 @@ func (s *Server) GetLeague(ctx context.Context, req *pb.GetLeagueRequest) (*pb.G
 	if len(league.Franchises) > 0 {
 		for _, f := range league.Franchises {
 			tmpFranchise.ID = f.ID.String()
-			tmpFranchise.OwnerID = f.OwnerID.String()
-			tmpFranchise.OwnerName = f.OwnerName
+			tmpFranchise.OwnerID = f.UserID.String()
+			tmpFranchise.OwnerName = f.UserName
 			tmpFranchise.Name = f.Name
 			tmpFranchise.FoundationYear = f.FoundationYear
 			franchisesRes = append(franchisesRes, &tmpFranchise)
@@ -177,8 +177,8 @@ func (s *Server) GetLeagues(ctx context.Context, req *pb.GetLeaguesRequest) (*pb
 			for _, f := range l.Franchises {
 				tmpFranchise := pb.Franchise{}
 				tmpFranchise.ID = f.ID.String()
-				tmpFranchise.OwnerID = f.OwnerID.String()
-				tmpFranchise.OwnerName = f.OwnerName
+				tmpFranchise.OwnerID = f.UserID.String()
+				tmpFranchise.OwnerName = f.UserName
 				tmpFranchise.Name = f.Name
 				tmpFranchise.FoundationYear = f.FoundationYear
 				franchisesRes = append(franchisesRes, &tmpFranchise)
@@ -240,8 +240,8 @@ func (s *Server) CreateFranchise(ctx context.Context, req *pb.FranchiseRequest) 
 	}
 
 	franchise.Name = req.Name
-	franchise.OwnerID = uuid.MustParse(req.OwnerID)
-	franchise.OwnerName = req.OwnerName
+	franchise.UserID = uuid.MustParse(req.OwnerID)
+	franchise.UserName = req.OwnerName
 	franchise.FoundationYear = req.FoundationYear
 	franchise.LeagueID = uuid.MustParse(req.LeagueId)
 
@@ -294,8 +294,8 @@ func (s *Server) GetFranchise(ctx context.Context, req *pb.GetFranchiseRequest) 
 	}
 	franchiseRes = &pb.Franchise{
 		ID:             franchise.ID.String(),
-		OwnerID:        franchise.OwnerID.String(),
-		OwnerName:      franchise.OwnerName,
+		OwnerID:        franchise.UserID.String(),
+		OwnerName:      franchise.UserName,
 		Name:           franchise.Name,
 		FoundationYear: franchise.FoundationYear,
 		Prospects:      prospectRes,
@@ -340,8 +340,8 @@ func (s *Server) GetLeagueFranchises(ctx context.Context, req *pb.GetLeagueReque
 		}
 		tmpFranchise := &pb.Franchise{
 			ID:             f.ID.String(),
-			OwnerID:        f.OwnerID.String(),
-			OwnerName:      f.OwnerName,
+			OwnerID:        f.UserID.String(),
+			OwnerName:      f.UserName,
 			Name:           f.Name,
 			FoundationYear: f.FoundationYear,
 			Prospects:      prospectRes,
@@ -376,6 +376,7 @@ func (s *Server) CreateProspectsBulk(ctx context.Context, req *pb.CreateProspect
 			prospects = append(prospects, prospect)
 		}
 	}
+
 	if len(prospects) > 0 {
 		logrus.Info(fmt.Sprintf("Prospects that will be batch inserted: %v", len(prospects)))
 		if createProspects := s.R.DB.Create(&prospects); createProspects.Error != nil {
@@ -420,6 +421,17 @@ func (s *Server) TextSearchProspects(ctx context.Context, req *pb.TextSearchRequ
 			ProspectID:       p.Pick.ProspectID.String(),
 		}
 
+		lId := ""
+		fId := ""
+
+		if p.LeagueID != nil {
+			lId = p.LeagueID.String()
+		}
+
+		if p.FranchiseID != nil {
+			fId = p.FranchiseID.String()
+		}
+
 		pp := &pb.Prospect{
 			ID:                  p.ID.String(),
 			FullName:            p.FullName,
@@ -434,8 +446,8 @@ func (s *Server) TextSearchProspects(ctx context.Context, req *pb.TextSearchRequ
 			NhlDraftRound:       p.NhlDraftRound,
 			NhlPickInRound:      p.NhlDraftPickInRound,
 			NhlDraftPickOverall: p.NhlDraftPickOverall,
-			LeagueID:            p.LeagueID.String(),
-			FranchiseID:         p.FranchiseID.String(),
+			LeagueID:            lId,
+			FranchiseID:         fId,
 			Pick:                pick,
 		}
 		prospectsRes = append(prospectsRes, pp)
@@ -484,7 +496,7 @@ func (s *Server) GetPicks(ctx context.Context, req *pb.GetFranchiseRequest) (*pb
 
 }
 
-func (s *Server) Trade(ctx context.Context, req *pb.TradeRequest) (*pb.TradeResponse, error) {
+func (s *Server) Trade(ctx context.Context, req *pb.TradeRequest) (*pb.DefaultResponse, error) {
 	/*
 		var picks []models.Pick
 		fromFranchiseID := uuid.MustParse(req.FromFranchiseID)
@@ -495,17 +507,38 @@ func (s *Server) Trade(ctx context.Context, req *pb.TradeRequest) (*pb.TradeResp
 		// handle picks
 		var picks = []models.Pick{}
 		for _, p := range req.Picks {
+
+			pId, err := uuid.Parse(p.ProspectID)
+			if err != nil {
+				logrus.Error(fmt.Sprintf("Could not parse %v", p.ProspectID))
+			}
+
+			oId, err := uuid.Parse(p.OwnerID)
+			if err != nil {
+				logrus.Error(fmt.Sprintf("Could not parse %v", p.OwnerID))
+			}
+
+			loId, err := uuid.Parse(p.LastOwnerID)
+			if err != nil {
+				logrus.Error(fmt.Sprintf("Could not parse %v", p.LastOwnerID))
+			}
+
+			orId, err := uuid.Parse(p.OriginID)
+			if err != nil {
+				logrus.Error(fmt.Sprintf("Could not parse %v", p.OriginID))
+			}
+
 			picks = append(picks, models.Pick{
 				DraftYear:        p.DraftYear,
 				DraftRound:       p.DraftRound,
 				DraftPickInRound: p.DraftPickInRound,
 				DraftPickOverall: p.DraftPickOverall,
-				ProspectID:       uuid.MustParse(p.ProspectID),
-				OwnerID:          uuid.MustParse(p.OwnerID),
+				ProspectID:       &pId,
+				OwnerID:          &oId,
 				OwnerName:        p.OriginName,
-				LastOwnerID:      uuid.MustParse(p.LastOwnerID),
+				LastOwnerID:      &loId,
 				LastOwnerName:    p.LastOwnerName,
-				OriginID:         uuid.MustParse(p.OriginID),
+				OriginID:         &orId,
 				OriginName:       p.OriginName,
 			})
 
@@ -524,6 +557,8 @@ func (s *Server) Trade(ctx context.Context, req *pb.TradeRequest) (*pb.TradeResp
 		// handle prospects
 		var prospects = []models.Prospect{}
 		for _, p := range req.Prospects {
+			lPtr := uuid.MustParse(p.LeagueID)
+			fPtr := uuid.MustParse(p.FranchiseID)
 
 			prospects = append(prospects, models.Prospect{
 				FullName:            p.FullName,
@@ -538,8 +573,8 @@ func (s *Server) Trade(ctx context.Context, req *pb.TradeRequest) (*pb.TradeResp
 				NhlDraftPickInRound: p.NhlPickInRound,
 				NhlDraftPickOverall: p.NhlDraftPickOverall,
 				PositionCode:        p.PositionCode,
-				LeagueID:            uuid.MustParse(p.LeagueID),
-				FranchiseID:         uuid.MustParse(p.FranchiseID),
+				LeagueID:            &lPtr,
+				FranchiseID:         &fPtr,
 			})
 		}
 
@@ -558,14 +593,14 @@ func (s *Server) Trade(ctx context.Context, req *pb.TradeRequest) (*pb.TradeResp
 	})
 
 	if transaction != nil {
-		return &pb.TradeResponse{
+		return &pb.DefaultResponse{
 			Status: http.StatusOK,
 			Error:  transaction.Error(),
 		}, nil
 
 	}
 
-	return &pb.TradeResponse{
+	return &pb.DefaultResponse{
 		Status: http.StatusOK,
 	}, nil
 

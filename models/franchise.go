@@ -10,12 +10,12 @@ import (
 type Franchise struct {
 	ID             uuid.UUID  `json:"id" gorm:"primaryKey"`
 	Name           string     `json:"name" gorm:"not null;type:string"`
-	OwnerID        uuid.UUID  `json:"ownerId" gorm:"not null;type:uuid;"`
-	OwnerName      string     `json:"ownerName" gorm:"not null;type:string;"`
+	UserID         uuid.UUID  `json:"userId" gorm:"not null;type:uuid;"`
+	UserName       string     `json:"userName" gorm:"not null;type:string;"`
 	FoundationYear string     `json:"foundationYear" gorm:"not null;type:string"`
-	LeagueID       uuid.UUID  `json:"leagueId" gorm:"not null;foreignKey:FranchiseID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
-	Prospects      []Prospect `json:"prospects" gorm:"foreignKey:FranchiseID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
-	Picks          []Pick     `json:"picks" gorm:"foreignKey:FranchiseID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
+	LeagueID       uuid.UUID  `json:"leagueId" gorm:"not null;foreignKey:FranchiseID;constraint:OnUpdate:CASCADE;OnDelete:SET NULL"`
+	Prospects      []Prospect `json:"prospects" gorm:"foreignKey:FranchiseID;constraint:OnUpdate:CASCADE;OnDelete:SET NULL"`
+	Picks          []Pick     `json:"picks" gorm:"foreignKey:OwnerID;constraint:OnUpdate:CASCADE;OnDelete:SET NULL"`
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 }

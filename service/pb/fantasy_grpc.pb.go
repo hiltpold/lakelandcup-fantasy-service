@@ -33,7 +33,8 @@ type FantasyServiceClient interface {
 	CreateProspectsBulk(ctx context.Context, in *CreateProspectsBulkRequest, opts ...grpc.CallOption) (*CreateProspectsBulkResponse, error)
 	TextSearchProspects(ctx context.Context, in *TextSearchRequest, opts ...grpc.CallOption) (*TextSearchProspectsResponse, error)
 	GetPicks(ctx context.Context, in *GetFranchiseRequest, opts ...grpc.CallOption) (*GetPicksResponse, error)
-	Trade(ctx context.Context, in *TradeRequest, opts ...grpc.CallOption) (*TradeResponse, error)
+	Trade(ctx context.Context, in *TradeRequest, opts ...grpc.CallOption) (*DefaultResponse, error)
+	CreateOrUpdatePicks(ctx context.Context, in *CreateOrUpdatePicksRequest, opts ...grpc.CallOption) (*DefaultResponse, error)
 	//
 	DraftProspect(ctx context.Context, in *DraftProspectRequest, opts ...grpc.CallOption) (*DraftProspectResponse, error)
 	UndraftProspect(ctx context.Context, in *DraftProspectRequest, opts ...grpc.CallOption) (*DraftProspectResponse, error)
@@ -147,9 +148,18 @@ func (c *fantasyServiceClient) GetPicks(ctx context.Context, in *GetFranchiseReq
 	return out, nil
 }
 
-func (c *fantasyServiceClient) Trade(ctx context.Context, in *TradeRequest, opts ...grpc.CallOption) (*TradeResponse, error) {
-	out := new(TradeResponse)
+func (c *fantasyServiceClient) Trade(ctx context.Context, in *TradeRequest, opts ...grpc.CallOption) (*DefaultResponse, error) {
+	out := new(DefaultResponse)
 	err := c.cc.Invoke(ctx, "/fantasy.FantasyService/Trade", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fantasyServiceClient) CreateOrUpdatePicks(ctx context.Context, in *CreateOrUpdatePicksRequest, opts ...grpc.CallOption) (*DefaultResponse, error) {
+	out := new(DefaultResponse)
+	err := c.cc.Invoke(ctx, "/fantasy.FantasyService/CreateOrUpdatePicks", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -198,7 +208,8 @@ type FantasyServiceServer interface {
 	CreateProspectsBulk(context.Context, *CreateProspectsBulkRequest) (*CreateProspectsBulkResponse, error)
 	TextSearchProspects(context.Context, *TextSearchRequest) (*TextSearchProspectsResponse, error)
 	GetPicks(context.Context, *GetFranchiseRequest) (*GetPicksResponse, error)
-	Trade(context.Context, *TradeRequest) (*TradeResponse, error)
+	Trade(context.Context, *TradeRequest) (*DefaultResponse, error)
+	CreateOrUpdatePicks(context.Context, *CreateOrUpdatePicksRequest) (*DefaultResponse, error)
 	//
 	DraftProspect(context.Context, *DraftProspectRequest) (*DraftProspectResponse, error)
 	UndraftProspect(context.Context, *DraftProspectRequest) (*DraftProspectResponse, error)
@@ -243,8 +254,11 @@ func (UnimplementedFantasyServiceServer) TextSearchProspects(context.Context, *T
 func (UnimplementedFantasyServiceServer) GetPicks(context.Context, *GetFranchiseRequest) (*GetPicksResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPicks not implemented")
 }
-func (UnimplementedFantasyServiceServer) Trade(context.Context, *TradeRequest) (*TradeResponse, error) {
+func (UnimplementedFantasyServiceServer) Trade(context.Context, *TradeRequest) (*DefaultResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Trade not implemented")
+}
+func (UnimplementedFantasyServiceServer) CreateOrUpdatePicks(context.Context, *CreateOrUpdatePicksRequest) (*DefaultResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateOrUpdatePicks not implemented")
 }
 func (UnimplementedFantasyServiceServer) DraftProspect(context.Context, *DraftProspectRequest) (*DraftProspectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DraftProspect not implemented")
@@ -484,6 +498,24 @@ func _FantasyService_Trade_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FantasyService_CreateOrUpdatePicks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateOrUpdatePicksRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FantasyServiceServer).CreateOrUpdatePicks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/fantasy.FantasyService/CreateOrUpdatePicks",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FantasyServiceServer).CreateOrUpdatePicks(ctx, req.(*CreateOrUpdatePicksRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _FantasyService_DraftProspect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DraftProspectRequest)
 	if err := dec(in); err != nil {
@@ -592,6 +624,10 @@ var FantasyService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Trade",
 			Handler:    _FantasyService_Trade_Handler,
+		},
+		{
+			MethodName: "CreateOrUpdatePicks",
+			Handler:    _FantasyService_CreateOrUpdatePicks_Handler,
 		},
 		{
 			MethodName: "DraftProspect",
