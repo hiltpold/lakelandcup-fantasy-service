@@ -411,14 +411,16 @@ func (s *Server) TextSearchProspects(ctx context.Context, req *pb.TextSearchRequ
 	for rows.Next() {
 		p := models.Prospect{}
 		s.R.DB.ScanRows(rows, &p)
-
-		pick := &pb.Pick{
-			ID:               p.Pick.ID.String(),
-			DraftYear:        p.Pick.DraftYear,
-			DraftRound:       p.Pick.DraftRound,
-			DraftPickInRound: p.Pick.DraftPickInRound,
-			DraftPickOverall: p.Pick.DraftPickOverall,
-			ProspectID:       p.Pick.ProspectID.String(),
+		pick := pb.Pick{}
+		if p.Pick != nil {
+			pick = pb.Pick{
+				ID:               p.Pick.ID.String(),
+				DraftYear:        p.Pick.DraftYear,
+				DraftRound:       p.Pick.DraftRound,
+				DraftPickInRound: p.Pick.DraftPickInRound,
+				DraftPickOverall: p.Pick.DraftPickOverall,
+				ProspectID:       p.Pick.ProspectID.String(),
+			}
 		}
 
 		lId := ""
@@ -448,7 +450,7 @@ func (s *Server) TextSearchProspects(ctx context.Context, req *pb.TextSearchRequ
 			NhlDraftPickOverall: p.NhlDraftPickOverall,
 			LeagueID:            lId,
 			FranchiseID:         fId,
-			Pick:                pick,
+			Pick:                &pick,
 		}
 		prospectsRes = append(prospectsRes, pp)
 	}
@@ -457,43 +459,6 @@ func (s *Server) TextSearchProspects(ctx context.Context, req *pb.TextSearchRequ
 		Status:    http.StatusOK,
 		Prospects: prospectsRes,
 	}, nil
-}
-
-func (s *Server) GetPicks(ctx context.Context, req *pb.GetFranchiseRequest) (*pb.GetPicksResponse, error) {
-	var picks []models.Pick
-
-	fId := uuid.MustParse(req.FranchiseID)
-
-	if findPicks := s.R.DB.Preload("Owner").Where("owner.id = ", fId).Find(&picks).Limit(1000); findPicks.Error == nil {
-		return &pb.GetPicksResponse{
-			Status: http.StatusForbidden,
-			Error:  fmt.Sprintf("Creating prospects failed %q", findPicks.Error),
-		}, nil
-	}
-
-	picksRes := []*pb.Pick{}
-	for _, p := range picks {
-		picksRes = append(picksRes, &pb.Pick{
-			ID:               p.ID.String(),
-			DraftYear:        p.DraftYear,
-			DraftRound:       p.DraftRound,
-			DraftPickInRound: p.DraftPickInRound,
-			DraftPickOverall: p.DraftPickOverall,
-			ProspectID:       p.ProspectID.String(),
-			OwnerID:          p.OwnerID.String(),
-			OwnerName:        p.OwnerName,
-			LastOwnerID:      p.LastOwnerID.String(),
-			LastOwnerName:    p.LastOwnerName,
-			OriginID:         p.OriginID.String(),
-			OriginName:       p.OriginName,
-		})
-	}
-
-	return &pb.GetPicksResponse{
-		Status: http.StatusOK,
-		Picks:  picksRes,
-	}, nil
-
 }
 
 func (s *Server) Trade(ctx context.Context, req *pb.TradeRequest) (*pb.DefaultResponse, error) {

@@ -32,7 +32,8 @@ type FantasyServiceClient interface {
 	CreateProspect(ctx context.Context, in *CreateProspectRequest, opts ...grpc.CallOption) (*CreateProspectResponse, error)
 	CreateProspectsBulk(ctx context.Context, in *CreateProspectsBulkRequest, opts ...grpc.CallOption) (*CreateProspectsBulkResponse, error)
 	TextSearchProspects(ctx context.Context, in *TextSearchRequest, opts ...grpc.CallOption) (*TextSearchProspectsResponse, error)
-	GetPicks(ctx context.Context, in *GetFranchiseRequest, opts ...grpc.CallOption) (*GetPicksResponse, error)
+	GetPicksByFranchise(ctx context.Context, in *GetPicksRequest, opts ...grpc.CallOption) (*GetPicksResponse, error)
+	GetPicksByYear(ctx context.Context, in *GetPicksRequest, opts ...grpc.CallOption) (*GetPicksResponse, error)
 	Trade(ctx context.Context, in *TradeRequest, opts ...grpc.CallOption) (*DefaultResponse, error)
 	CreateOrUpdatePicks(ctx context.Context, in *CreateOrUpdatePicksRequest, opts ...grpc.CallOption) (*DefaultResponse, error)
 	//
@@ -139,9 +140,18 @@ func (c *fantasyServiceClient) TextSearchProspects(ctx context.Context, in *Text
 	return out, nil
 }
 
-func (c *fantasyServiceClient) GetPicks(ctx context.Context, in *GetFranchiseRequest, opts ...grpc.CallOption) (*GetPicksResponse, error) {
+func (c *fantasyServiceClient) GetPicksByFranchise(ctx context.Context, in *GetPicksRequest, opts ...grpc.CallOption) (*GetPicksResponse, error) {
 	out := new(GetPicksResponse)
-	err := c.cc.Invoke(ctx, "/fantasy.FantasyService/GetPicks", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/fantasy.FantasyService/GetPicksByFranchise", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fantasyServiceClient) GetPicksByYear(ctx context.Context, in *GetPicksRequest, opts ...grpc.CallOption) (*GetPicksResponse, error) {
+	out := new(GetPicksResponse)
+	err := c.cc.Invoke(ctx, "/fantasy.FantasyService/GetPicksByYear", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -207,7 +217,8 @@ type FantasyServiceServer interface {
 	CreateProspect(context.Context, *CreateProspectRequest) (*CreateProspectResponse, error)
 	CreateProspectsBulk(context.Context, *CreateProspectsBulkRequest) (*CreateProspectsBulkResponse, error)
 	TextSearchProspects(context.Context, *TextSearchRequest) (*TextSearchProspectsResponse, error)
-	GetPicks(context.Context, *GetFranchiseRequest) (*GetPicksResponse, error)
+	GetPicksByFranchise(context.Context, *GetPicksRequest) (*GetPicksResponse, error)
+	GetPicksByYear(context.Context, *GetPicksRequest) (*GetPicksResponse, error)
 	Trade(context.Context, *TradeRequest) (*DefaultResponse, error)
 	CreateOrUpdatePicks(context.Context, *CreateOrUpdatePicksRequest) (*DefaultResponse, error)
 	//
@@ -251,8 +262,11 @@ func (UnimplementedFantasyServiceServer) CreateProspectsBulk(context.Context, *C
 func (UnimplementedFantasyServiceServer) TextSearchProspects(context.Context, *TextSearchRequest) (*TextSearchProspectsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method TextSearchProspects not implemented")
 }
-func (UnimplementedFantasyServiceServer) GetPicks(context.Context, *GetFranchiseRequest) (*GetPicksResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPicks not implemented")
+func (UnimplementedFantasyServiceServer) GetPicksByFranchise(context.Context, *GetPicksRequest) (*GetPicksResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPicksByFranchise not implemented")
+}
+func (UnimplementedFantasyServiceServer) GetPicksByYear(context.Context, *GetPicksRequest) (*GetPicksResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPicksByYear not implemented")
 }
 func (UnimplementedFantasyServiceServer) Trade(context.Context, *TradeRequest) (*DefaultResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Trade not implemented")
@@ -462,20 +476,38 @@ func _FantasyService_TextSearchProspects_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
-func _FantasyService_GetPicks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetFranchiseRequest)
+func _FantasyService_GetPicksByFranchise_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPicksRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(FantasyServiceServer).GetPicks(ctx, in)
+		return srv.(FantasyServiceServer).GetPicksByFranchise(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/fantasy.FantasyService/GetPicks",
+		FullMethod: "/fantasy.FantasyService/GetPicksByFranchise",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FantasyServiceServer).GetPicks(ctx, req.(*GetFranchiseRequest))
+		return srv.(FantasyServiceServer).GetPicksByFranchise(ctx, req.(*GetPicksRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FantasyService_GetPicksByYear_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPicksRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FantasyServiceServer).GetPicksByYear(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/fantasy.FantasyService/GetPicksByYear",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FantasyServiceServer).GetPicksByYear(ctx, req.(*GetPicksRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -618,8 +650,12 @@ var FantasyService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _FantasyService_TextSearchProspects_Handler,
 		},
 		{
-			MethodName: "GetPicks",
-			Handler:    _FantasyService_GetPicks_Handler,
+			MethodName: "GetPicksByFranchise",
+			Handler:    _FantasyService_GetPicksByFranchise_Handler,
+		},
+		{
+			MethodName: "GetPicksByYear",
+			Handler:    _FantasyService_GetPicksByYear_Handler,
 		},
 		{
 			MethodName: "Trade",

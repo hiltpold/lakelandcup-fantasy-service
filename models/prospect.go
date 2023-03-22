@@ -21,10 +21,10 @@ type Prospect struct {
 	NhlDraftPickOverall string     `json:"nhlDraftPickOverall" gorm:"not null;type:string"`
 	NhlDraftPickInRound string     `json:"nhlDraftPickInRound" gorm:"not null;type:string"`
 	PositionCode        string     `json:"positionCode" gorm:"not null;type:string"`
-	Protected           string     `json:"protected" gorm:"not null;type:bool;default:true"`
+	Protected           string     `json:"protected" gorm:"not null;type:bool;default:false"`
 	LeagueID            *uuid.UUID `json:"leagueID" gorm:"foreignKey:LeagueID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 	FranchiseID         *uuid.UUID `json:"franchiseID" gorm:"foreignKey:FranchiseID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
-	Pick                Pick       `json:"pick" gorm:"foreignKey:OwnerID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	Pick                *Pick      `json:"pick" gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 	CreatedAt           time.Time
 	UpdatedAt           time.Time
 }

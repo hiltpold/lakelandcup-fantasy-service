@@ -15,7 +15,8 @@ service FantasyService {
     rpc CreateProspect(CreateProspectRequest) returns (CreateProspectResponse) {}
     rpc CreateProspectsBulk(CreateProspectsBulkRequest) returns (CreateProspectsBulkResponse) {}
     rpc TextSearchProspects(TextSearchRequest) returns (TextSearchProspectsResponse) {}
-    rpc GetPicks(GetFranchiseRequest) returns (GetPicksResponse) {}
+    rpc GetPicksByFranchise(GetPicksRequest) returns (GetPicksResponse) {}
+    rpc GetPicksByYear(GetPicksRequest) returns (GetPicksResponse) {}
     rpc Trade(TradeRequest) returns (DefaultResponse) {}
     rpc CreateOrUpdatePicks(CreateOrUpdatePicksRequest) returns (DefaultResponse) {}
     //
@@ -28,11 +29,6 @@ service FantasyService {
       Lakelandcup
   */
   
-  message DefaultResponse {
-    int64 status = 1;
-    string error = 2;
-  }
-
   message League {
     string ID = 1;
     string Admin = 2;
@@ -98,6 +94,11 @@ service FantasyService {
       string DraftRound= 3;
       string DraftPickOverall= 4;
       string DraftPickInRound = 5;
+  }
+  
+  message DefaultResponse {
+    int64 status = 1;
+    string error = 2;
   }
   
   // League
@@ -192,9 +193,9 @@ service FantasyService {
   
   // get single league
   message GetFranchiseRequest{
-      string FranchiseID = 1;
+    string FranchiseID = 1;
   }
-  
+    
   message GetFranchiseResponse {
     int64 status = 1;
     string error = 2;
@@ -259,7 +260,7 @@ service FantasyService {
   }
 
   message CreateOrUpdatePick {
-    string FranchiseName = 1;
+    string Franchise = 1;
     string FranchiseID = 2;
     string Year = 3;
     int32 LotteryPosition = 4;
@@ -268,6 +269,12 @@ service FantasyService {
   message CreateOrUpdatePicksRequest {
     string LeagueID = 1;
     repeated CreateOrUpdatePick picks = 2;
+  }
+
+  message GetPicksRequest {
+    string LeagueID = 1;
+    string FranchiseID = 2;
+    string Year = 3;
   }
 
   // Trade 
