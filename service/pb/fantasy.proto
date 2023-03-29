@@ -19,9 +19,9 @@ service FantasyService {
     rpc GetPicksByYear(GetPicksRequest) returns (GetPicksResponse) {}
     rpc Trade(TradeRequest) returns (DefaultResponse) {}
     rpc CreateOrUpdatePicks(CreateOrUpdatePicksRequest) returns (DefaultResponse) {}
+    rpc DraftProspect(DraftRequest) returns (DefaultResponse) {}
+    rpc UndraftProspect(DraftRequest) returns (DefaultResponse) {}
     //
-    rpc DraftProspect(DraftProspectRequest) returns (DraftProspectResponse) {}
-    rpc UndraftProspect(DraftProspectRequest) returns (DraftProspectResponse) {}
     rpc GetLeagueFranchisePairs(GetLeagueFranchisePairsRequest) returns (GetLeagueFranchisePairsResponse) {}
   }
   
@@ -99,6 +99,7 @@ service FantasyService {
   message DefaultResponse {
     int64 status = 1;
     string error = 2;
+    string message = 3;
   }
   
   // League
@@ -238,19 +239,6 @@ service FantasyService {
     repeated string prospectIds = 3;
   }
 
-  message DraftProspectRequest {
-    DraftPick DraftPick = 1;
-    string ProspectID = 2;
-    string FranchiseID = 3;
-    string LeagueID=4;
-  }
-
-  message DraftProspectResponse {
-    int64 status = 1;
-    string error = 2;
-    string pickID = 3;
-  }
-  
   // Picks
 
   message GetPicksResponse {
@@ -275,6 +263,15 @@ service FantasyService {
     string LeagueID = 1;
     string FranchiseID = 2;
     string Year = 3;
+  }
+
+  // Draft
+
+  message DraftRequest {
+    string LeagueID = 1;
+    string FranchiseID = 2;
+    string ProspectID = 3;
+    string PickID = 4;
   }
 
   // Trade 

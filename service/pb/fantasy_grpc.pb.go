@@ -36,9 +36,9 @@ type FantasyServiceClient interface {
 	GetPicksByYear(ctx context.Context, in *GetPicksRequest, opts ...grpc.CallOption) (*GetPicksResponse, error)
 	Trade(ctx context.Context, in *TradeRequest, opts ...grpc.CallOption) (*DefaultResponse, error)
 	CreateOrUpdatePicks(ctx context.Context, in *CreateOrUpdatePicksRequest, opts ...grpc.CallOption) (*DefaultResponse, error)
+	DraftProspect(ctx context.Context, in *DraftRequest, opts ...grpc.CallOption) (*DefaultResponse, error)
+	UndraftProspect(ctx context.Context, in *DraftRequest, opts ...grpc.CallOption) (*DefaultResponse, error)
 	//
-	DraftProspect(ctx context.Context, in *DraftProspectRequest, opts ...grpc.CallOption) (*DraftProspectResponse, error)
-	UndraftProspect(ctx context.Context, in *DraftProspectRequest, opts ...grpc.CallOption) (*DraftProspectResponse, error)
 	GetLeagueFranchisePairs(ctx context.Context, in *GetLeagueFranchisePairsRequest, opts ...grpc.CallOption) (*GetLeagueFranchisePairsResponse, error)
 }
 
@@ -176,8 +176,8 @@ func (c *fantasyServiceClient) CreateOrUpdatePicks(ctx context.Context, in *Crea
 	return out, nil
 }
 
-func (c *fantasyServiceClient) DraftProspect(ctx context.Context, in *DraftProspectRequest, opts ...grpc.CallOption) (*DraftProspectResponse, error) {
-	out := new(DraftProspectResponse)
+func (c *fantasyServiceClient) DraftProspect(ctx context.Context, in *DraftRequest, opts ...grpc.CallOption) (*DefaultResponse, error) {
+	out := new(DefaultResponse)
 	err := c.cc.Invoke(ctx, "/fantasy.FantasyService/DraftProspect", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -185,8 +185,8 @@ func (c *fantasyServiceClient) DraftProspect(ctx context.Context, in *DraftProsp
 	return out, nil
 }
 
-func (c *fantasyServiceClient) UndraftProspect(ctx context.Context, in *DraftProspectRequest, opts ...grpc.CallOption) (*DraftProspectResponse, error) {
-	out := new(DraftProspectResponse)
+func (c *fantasyServiceClient) UndraftProspect(ctx context.Context, in *DraftRequest, opts ...grpc.CallOption) (*DefaultResponse, error) {
+	out := new(DefaultResponse)
 	err := c.cc.Invoke(ctx, "/fantasy.FantasyService/UndraftProspect", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -221,9 +221,9 @@ type FantasyServiceServer interface {
 	GetPicksByYear(context.Context, *GetPicksRequest) (*GetPicksResponse, error)
 	Trade(context.Context, *TradeRequest) (*DefaultResponse, error)
 	CreateOrUpdatePicks(context.Context, *CreateOrUpdatePicksRequest) (*DefaultResponse, error)
+	DraftProspect(context.Context, *DraftRequest) (*DefaultResponse, error)
+	UndraftProspect(context.Context, *DraftRequest) (*DefaultResponse, error)
 	//
-	DraftProspect(context.Context, *DraftProspectRequest) (*DraftProspectResponse, error)
-	UndraftProspect(context.Context, *DraftProspectRequest) (*DraftProspectResponse, error)
 	GetLeagueFranchisePairs(context.Context, *GetLeagueFranchisePairsRequest) (*GetLeagueFranchisePairsResponse, error)
 	mustEmbedUnimplementedFantasyServiceServer()
 }
@@ -274,10 +274,10 @@ func (UnimplementedFantasyServiceServer) Trade(context.Context, *TradeRequest) (
 func (UnimplementedFantasyServiceServer) CreateOrUpdatePicks(context.Context, *CreateOrUpdatePicksRequest) (*DefaultResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateOrUpdatePicks not implemented")
 }
-func (UnimplementedFantasyServiceServer) DraftProspect(context.Context, *DraftProspectRequest) (*DraftProspectResponse, error) {
+func (UnimplementedFantasyServiceServer) DraftProspect(context.Context, *DraftRequest) (*DefaultResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DraftProspect not implemented")
 }
-func (UnimplementedFantasyServiceServer) UndraftProspect(context.Context, *DraftProspectRequest) (*DraftProspectResponse, error) {
+func (UnimplementedFantasyServiceServer) UndraftProspect(context.Context, *DraftRequest) (*DefaultResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UndraftProspect not implemented")
 }
 func (UnimplementedFantasyServiceServer) GetLeagueFranchisePairs(context.Context, *GetLeagueFranchisePairsRequest) (*GetLeagueFranchisePairsResponse, error) {
@@ -549,7 +549,7 @@ func _FantasyService_CreateOrUpdatePicks_Handler(srv interface{}, ctx context.Co
 }
 
 func _FantasyService_DraftProspect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DraftProspectRequest)
+	in := new(DraftRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -561,13 +561,13 @@ func _FantasyService_DraftProspect_Handler(srv interface{}, ctx context.Context,
 		FullMethod: "/fantasy.FantasyService/DraftProspect",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FantasyServiceServer).DraftProspect(ctx, req.(*DraftProspectRequest))
+		return srv.(FantasyServiceServer).DraftProspect(ctx, req.(*DraftRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _FantasyService_UndraftProspect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DraftProspectRequest)
+	in := new(DraftRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -579,7 +579,7 @@ func _FantasyService_UndraftProspect_Handler(srv interface{}, ctx context.Contex
 		FullMethod: "/fantasy.FantasyService/UndraftProspect",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FantasyServiceServer).UndraftProspect(ctx, req.(*DraftProspectRequest))
+		return srv.(FantasyServiceServer).UndraftProspect(ctx, req.(*DraftRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

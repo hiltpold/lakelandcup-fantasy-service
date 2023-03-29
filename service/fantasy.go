@@ -397,7 +397,7 @@ func (s *Server) CreateProspectsBulk(ctx context.Context, req *pb.CreateProspect
 
 func (s *Server) TextSearchProspects(ctx context.Context, req *pb.TextSearchRequest) (*pb.TextSearchProspectsResponse, error) {
 
-	rows, err := s.R.DB.Model(&models.Prospect{}).Preload("LeagueID").Preload("FranchiseID").Preload("PickID").Raw(fmt.Sprintf("SELECT * FROM fantasy.prospects WHERE to_tsvector(full_name) @@ to_tsquery('%q')", req.Text)).Rows()
+	rows, err := s.R.DB.Model(&models.Prospect{}).Preload("Picks").Raw(fmt.Sprintf("SELECT * FROM fantasy.prospects WHERE to_tsvector(full_name) @@ to_tsquery('%q')", req.Text)).Rows()
 	if err != nil {
 		return &pb.TextSearchProspectsResponse{
 			Status: http.StatusConflict,
@@ -411,6 +411,8 @@ func (s *Server) TextSearchProspects(ctx context.Context, req *pb.TextSearchRequ
 	for rows.Next() {
 		p := models.Prospect{}
 		s.R.DB.ScanRows(rows, &p)
+		// TODO: avoid second query, better text search in first query
+		s.R.DB.Model(&p).Preload("Pick").Where(&models.Prospect{ID: p.ID}).First(&p)
 		pick := pb.Pick{}
 		if p.Pick != nil {
 			pick = pb.Pick{
