@@ -139,24 +139,34 @@ func (s *Server) GetPicksByYear(ctx context.Context, req *pb.GetPicksRequest) (*
 func (s *Server) GetPicksByFranchise(ctx context.Context, req *pb.GetPicksRequest) (*pb.GetPicksResponse, error) {
 	var picks []models.Pick
 
-	fId := uuid.MustParse(req.FranchiseID)
-
-	if findPicks := s.R.DB.Preload("Owner").Where("owner.id = ", fId).Find(&picks).Limit(1000); findPicks.Error == nil {
+	fId, err := uuid.Parse(req.FranchiseID)
+	if err != nil {
 		return &pb.GetPicksResponse{
 			Status: http.StatusForbidden,
-			Error:  fmt.Sprintf("Creating prospects failed %q", findPicks.Error),
+			Error:  fmt.Sprintf("Could not parse uuid for franchise id %q.", fId)}, nil
+
+	}
+
+	if findPicks := s.R.DB.Where(models.Pick{OwnerID: &fId}).Find(&picks).Limit(1000); findPicks.Error != nil {
+		return &pb.GetPicksResponse{
+			Status: http.StatusForbidden,
+			Error:  fmt.Sprintf("Could not fetch picks for franchise %q. Error: %v", fId, findPicks.Error),
 		}, nil
 	}
 
 	picksRes := []*pb.Pick{}
 	for _, p := range picks {
+		pId := ""
+		if p.ProspectID != nil {
+			pId = p.ProspectID.String()
+		}
 		picksRes = append(picksRes, &pb.Pick{
 			ID:               p.ID.String(),
 			DraftYear:        p.DraftYear,
 			DraftRound:       p.DraftRound,
 			DraftPickInRound: p.DraftPickInRound,
 			DraftPickOverall: p.DraftPickOverall,
-			ProspectID:       p.ProspectID.String(),
+			ProspectID:       pId,
 			OwnerID:          p.OwnerID.String(),
 			OwnerName:        p.OwnerName,
 			LastOwnerID:      p.LastOwnerID.String(),
@@ -165,6 +175,8 @@ func (s *Server) GetPicksByFranchise(ctx context.Context, req *pb.GetPicksReques
 			OriginName:       p.OriginName,
 		})
 	}
+
+	logrus.Info(fmt.Sprintf("-> %+v", picksRes))
 
 	return &pb.GetPicksResponse{
 		Status: http.StatusOK,

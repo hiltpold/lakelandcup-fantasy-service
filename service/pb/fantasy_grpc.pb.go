@@ -31,7 +31,8 @@ type FantasyServiceClient interface {
 	GetFranchise(ctx context.Context, in *GetFranchiseRequest, opts ...grpc.CallOption) (*GetFranchiseResponse, error)
 	CreateProspect(ctx context.Context, in *CreateProspectRequest, opts ...grpc.CallOption) (*CreateProspectResponse, error)
 	CreateProspectsBulk(ctx context.Context, in *CreateProspectsBulkRequest, opts ...grpc.CallOption) (*CreateProspectsBulkResponse, error)
-	TextSearchProspects(ctx context.Context, in *TextSearchRequest, opts ...grpc.CallOption) (*TextSearchProspectsResponse, error)
+	TextSearchProspects(ctx context.Context, in *TextSearchRequest, opts ...grpc.CallOption) (*ProspectsResponse, error)
+	GetProspectsByFranchise(ctx context.Context, in *GetFranchiseRequest, opts ...grpc.CallOption) (*ProspectsResponse, error)
 	GetPicksByFranchise(ctx context.Context, in *GetPicksRequest, opts ...grpc.CallOption) (*GetPicksResponse, error)
 	GetPicksByYear(ctx context.Context, in *GetPicksRequest, opts ...grpc.CallOption) (*GetPicksResponse, error)
 	Trade(ctx context.Context, in *TradeRequest, opts ...grpc.CallOption) (*DefaultResponse, error)
@@ -131,9 +132,18 @@ func (c *fantasyServiceClient) CreateProspectsBulk(ctx context.Context, in *Crea
 	return out, nil
 }
 
-func (c *fantasyServiceClient) TextSearchProspects(ctx context.Context, in *TextSearchRequest, opts ...grpc.CallOption) (*TextSearchProspectsResponse, error) {
-	out := new(TextSearchProspectsResponse)
+func (c *fantasyServiceClient) TextSearchProspects(ctx context.Context, in *TextSearchRequest, opts ...grpc.CallOption) (*ProspectsResponse, error) {
+	out := new(ProspectsResponse)
 	err := c.cc.Invoke(ctx, "/fantasy.FantasyService/TextSearchProspects", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fantasyServiceClient) GetProspectsByFranchise(ctx context.Context, in *GetFranchiseRequest, opts ...grpc.CallOption) (*ProspectsResponse, error) {
+	out := new(ProspectsResponse)
+	err := c.cc.Invoke(ctx, "/fantasy.FantasyService/GetProspectsByFranchise", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -216,7 +226,8 @@ type FantasyServiceServer interface {
 	GetFranchise(context.Context, *GetFranchiseRequest) (*GetFranchiseResponse, error)
 	CreateProspect(context.Context, *CreateProspectRequest) (*CreateProspectResponse, error)
 	CreateProspectsBulk(context.Context, *CreateProspectsBulkRequest) (*CreateProspectsBulkResponse, error)
-	TextSearchProspects(context.Context, *TextSearchRequest) (*TextSearchProspectsResponse, error)
+	TextSearchProspects(context.Context, *TextSearchRequest) (*ProspectsResponse, error)
+	GetProspectsByFranchise(context.Context, *GetFranchiseRequest) (*ProspectsResponse, error)
 	GetPicksByFranchise(context.Context, *GetPicksRequest) (*GetPicksResponse, error)
 	GetPicksByYear(context.Context, *GetPicksRequest) (*GetPicksResponse, error)
 	Trade(context.Context, *TradeRequest) (*DefaultResponse, error)
@@ -259,8 +270,11 @@ func (UnimplementedFantasyServiceServer) CreateProspect(context.Context, *Create
 func (UnimplementedFantasyServiceServer) CreateProspectsBulk(context.Context, *CreateProspectsBulkRequest) (*CreateProspectsBulkResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateProspectsBulk not implemented")
 }
-func (UnimplementedFantasyServiceServer) TextSearchProspects(context.Context, *TextSearchRequest) (*TextSearchProspectsResponse, error) {
+func (UnimplementedFantasyServiceServer) TextSearchProspects(context.Context, *TextSearchRequest) (*ProspectsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method TextSearchProspects not implemented")
+}
+func (UnimplementedFantasyServiceServer) GetProspectsByFranchise(context.Context, *GetFranchiseRequest) (*ProspectsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetProspectsByFranchise not implemented")
 }
 func (UnimplementedFantasyServiceServer) GetPicksByFranchise(context.Context, *GetPicksRequest) (*GetPicksResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPicksByFranchise not implemented")
@@ -476,6 +490,24 @@ func _FantasyService_TextSearchProspects_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FantasyService_GetProspectsByFranchise_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetFranchiseRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FantasyServiceServer).GetProspectsByFranchise(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/fantasy.FantasyService/GetProspectsByFranchise",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FantasyServiceServer).GetProspectsByFranchise(ctx, req.(*GetFranchiseRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _FantasyService_GetPicksByFranchise_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetPicksRequest)
 	if err := dec(in); err != nil {
@@ -648,6 +680,10 @@ var FantasyService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "TextSearchProspects",
 			Handler:    _FantasyService_TextSearchProspects_Handler,
+		},
+		{
+			MethodName: "GetProspectsByFranchise",
+			Handler:    _FantasyService_GetProspectsByFranchise_Handler,
 		},
 		{
 			MethodName: "GetPicksByFranchise",

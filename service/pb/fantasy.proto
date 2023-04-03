@@ -14,7 +14,8 @@ service FantasyService {
     rpc GetFranchise(GetFranchiseRequest) returns (GetFranchiseResponse) {}
     rpc CreateProspect(CreateProspectRequest) returns (CreateProspectResponse) {}
     rpc CreateProspectsBulk(CreateProspectsBulkRequest) returns (CreateProspectsBulkResponse) {}
-    rpc TextSearchProspects(TextSearchRequest) returns (TextSearchProspectsResponse) {}
+    rpc TextSearchProspects(TextSearchRequest) returns (ProspectsResponse) {}
+    rpc GetProspectsByFranchise(GetFranchiseRequest) returns (ProspectsResponse) {}
     rpc GetPicksByFranchise(GetPicksRequest) returns (GetPicksResponse) {}
     rpc GetPicksByYear(GetPicksRequest) returns (GetPicksResponse) {}
     rpc Trade(TradeRequest) returns (DefaultResponse) {}
@@ -194,7 +195,8 @@ service FantasyService {
   
   // get single league
   message GetFranchiseRequest{
-    string FranchiseID = 1;
+    string LeagueID = 1;
+    string FranchiseID = 2;
   }
     
   message GetFranchiseResponse {
@@ -276,13 +278,17 @@ service FantasyService {
 
   // Trade 
 
-  message TradeRequest {
-    string FromFranchiseID = 1;
-    string ToFranchiseID = 2;
-    repeated Pick Picks = 3;
-    repeated Prospect Prospects = 4;
+  message TradePayload {
+    string FranchiseID = 1;
+    repeated string Picks = 2;
+    repeated string Prospects = 3;
+
   }
-  
+
+  message TradeRequest {
+    TradePayload First = 2;
+    TradePayload Second = 3;
+  }
 
   // Query
   
@@ -290,7 +296,7 @@ service FantasyService {
     string text = 1;
   }
 
-  message TextSearchProspectsResponse {
+  message ProspectsResponse {
     int64 status = 1;
     string error = 2;
     repeated Prospect prospects = 3;
