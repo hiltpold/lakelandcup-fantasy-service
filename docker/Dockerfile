@@ -13,4 +13,4 @@ WORKDIR /app/
 COPY --from=build /app/lakelandcup-fantasy-service .
 COPY --from=build /app/.prod.env /app/.prod.env
 EXPOSE 50020
-CMD ["./lakelandcup-auth-service","-c",".prod.env"]  
+CMD ["./lakelandcup-fantasy-service","-c",".prod.env"]  
