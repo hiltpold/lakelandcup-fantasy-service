@@ -6,3 +6,7 @@ build:
 
 fantasy-service-dev:
 	go run main.go -c .dev.env
+
+fantasy-service-prod:
+	go run main.go -c .dev.env
+
