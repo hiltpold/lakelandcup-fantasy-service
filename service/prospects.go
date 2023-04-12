@@ -44,6 +44,12 @@ func (s *Server) GetProspectsByFranchise(ctx context.Context, req *pb.GetFranchi
 			if p.FranchiseID != nil {
 				prospectId = p.FranchiseID.String()
 			}
+			protected := ""
+			if p.Protected {
+				protected = "yes"
+			} else {
+				protected = "no"
+			}
 			logrus.Info(p.Pick)
 			prospectsRes = append(prospectsRes, &pb.Prospect{
 				ID:          p.ID.String(),
@@ -53,6 +59,7 @@ func (s *Server) GetProspectsByFranchise(ctx context.Context, req *pb.GetFranchi
 				NhlTeam:     p.NhlTeam,
 				FranchiseID: prospectId,
 				Pick:        &pb.Pick{ID: pickId, DraftYear: p.Pick.DraftYear, DraftRound: p.Pick.DraftRound, DraftPickInRound: p.Pick.DraftPickInRound, DraftPickOverall: p.Pick.DraftPickOverall},
+				Protected:   protected,
 				Birthdate:   p.Birthdate,
 			})
 		}
@@ -136,6 +143,7 @@ func (s *Server) UndraftProspect(ctx context.Context, req *pb.DraftRequest) (*pb
 		prospect.LeagueID = nil
 		prospect.FranchiseID = nil
 		prospect.Pick = nil
+		prospect.Protected = false
 
 		tx.Save(&prospect)
 
@@ -215,7 +223,7 @@ func (s *Server) DraftProspect(ctx context.Context, req *pb.DraftRequest) (*pb.D
 
 		// update both
 
-		updateProspect := tx.Model(&prospect).Where(&models.Prospect{ID: prospectId}).Updates(models.Prospect{LeagueID: &leagueId, FranchiseID: &franchiseId})
+		updateProspect := tx.Model(&prospect).Where(&models.Prospect{ID: prospectId}).Updates(models.Prospect{LeagueID: &leagueId, FranchiseID: &franchiseId, Protected: true})
 		if updateProspect.Error != nil {
 			return updateProspect.Error
 		}
@@ -326,6 +334,13 @@ func (s *Server) TextSearchProspects(ctx context.Context, req *pb.TextSearchRequ
 			fId = p.FranchiseID.String()
 		}
 
+		protected := ""
+		if p.Protected {
+			protected = "yes"
+		} else {
+			protected = "no"
+		}
+
 		pp := &pb.Prospect{
 			ID:                  p.ID.String(),
 			FullName:            p.FullName,
@@ -343,6 +358,7 @@ func (s *Server) TextSearchProspects(ctx context.Context, req *pb.TextSearchRequ
 			LeagueID:            lId,
 			FranchiseID:         fId,
 			Pick:                &pick,
+			Protected:           protected,
 		}
 		prospectsRes = append(prospectsRes, pp)
 	}

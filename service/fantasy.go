@@ -20,7 +20,7 @@ type Server struct {
 }
 
 func (s *Server) Trade(ctx context.Context, req *pb.TradeRequest) (*pb.DefaultResponse, error) {
-	logrus.Info(fmt.Sprintf("%+v", req))
+	//logrus.Info(fmt.Sprintf("%+v", req))
 	var transaction = s.R.DB.Transaction(func(tx *gorm.DB) error {
 		//
 		var firstFranchise models.Franchise
@@ -62,8 +62,8 @@ func (s *Server) Trade(ctx context.Context, req *pb.TradeRequest) (*pb.DefaultRe
 
 			if findPick.RowsAffected == 1 {
 				// update ownership
-				pick.LastOwnerID = pick.OwnerID
-				pick.LastOwnerName = pick.OwnerName
+				pick.LastOwnerID = &firstFranchiseID
+				pick.LastOwnerName = firstFranchise.Name
 
 				pick.OwnerID = &secondFranchiseID
 				pick.OwnerName = secondFranchise.Name
@@ -88,8 +88,8 @@ func (s *Server) Trade(ctx context.Context, req *pb.TradeRequest) (*pb.DefaultRe
 
 			if findPick.RowsAffected == 1 {
 				// update ownership
-				pick.LastOwnerID = pick.OwnerID
-				pick.LastOwnerName = pick.OwnerName
+				pick.LastOwnerID = &secondFranchiseID
+				pick.LastOwnerName = secondFranchise.Name
 
 				pick.OwnerID = &firstFranchiseID
 				pick.OwnerName = firstFranchise.Name
