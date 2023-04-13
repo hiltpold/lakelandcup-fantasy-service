@@ -41,17 +41,24 @@ func (s *Server) CreateOrUpdatePicks(ctx context.Context, req *pb.CreateOrUpdate
 					Error:  fmt.Sprintf("Error while querying for pick with origin_id %q and year %q and draft round %q. Error: %q", fId, p.Year, dr, findPick.Error),
 				}, nil
 			}
-			// calculate overall pick
-			overallPick := int(p.LotteryPosition) + (dr-1)*int(nFranchises)
 
-			logrus.Info(findPick.RowsAffected, dr, fId)
+			if p.LotteryPosition == 0 {
+				pick.DraftPickInRound = nil
+				pick.DraftPickOverall = nil
+
+			} else {
+				// calculate overall pick
+				overallPick := int(p.LotteryPosition) + (dr-1)*int(nFranchises)
+				pInRound := fmt.Sprintf("%v", p.LotteryPosition)
+				pOverall := fmt.Sprintf("%v", overallPick)
+				pick.DraftPickInRound = &pInRound
+				pick.DraftPickOverall = &pOverall
+			}
 
 			if findPick.RowsAffected == 0 {
 				// pick does not exisit, create it
 				pick.DraftYear = p.Year
 				pick.DraftRound = fmt.Sprintf("%v", dr)
-				pick.DraftPickInRound = fmt.Sprintf("%v", p.LotteryPosition)
-				pick.DraftPickOverall = fmt.Sprintf("%v", overallPick)
 				pick.ProspectID = nil
 				pick.OwnerID = &fId
 				pick.OwnerName = p.Franchise
@@ -68,12 +75,10 @@ func (s *Server) CreateOrUpdatePicks(ctx context.Context, req *pb.CreateOrUpdate
 					}, nil
 				}
 			} else if findPick.RowsAffected == 1 {
+
 				// pick exists, update it
 				pick.DraftYear = p.Year
 				pick.DraftRound = fmt.Sprintf("%v", dr)
-				pick.DraftPickInRound = fmt.Sprintf("%v", p.LotteryPosition)
-				pick.DraftPickOverall = fmt.Sprintf("%v", overallPick)
-
 				// update
 				s.R.DB.Save(&pick)
 
@@ -113,12 +118,23 @@ func (s *Server) GetPicksByYear(ctx context.Context, req *pb.GetPicksRequest) (*
 		if p.ProspectID != nil {
 			pId = p.ProspectID.String()
 		}
+
+		pInRound := ""
+		if p.DraftPickInRound != nil {
+			pInRound = *p.DraftPickInRound
+		}
+
+		pOverall := ""
+		if p.DraftPickOverall != nil {
+			pOverall = *p.DraftPickOverall
+		}
+
 		picksRes = append(picksRes, &pb.Pick{
 			ID:               p.ID.String(),
 			DraftYear:        p.DraftYear,
 			DraftRound:       p.DraftRound,
-			DraftPickInRound: p.DraftPickInRound,
-			DraftPickOverall: p.DraftPickOverall,
+			DraftPickInRound: pInRound,
+			DraftPickOverall: pOverall,
 			ProspectID:       pId,
 			OwnerID:          p.OwnerID.String(),
 			OwnerName:        p.OwnerName,
@@ -160,12 +176,23 @@ func (s *Server) GetPicksByFranchise(ctx context.Context, req *pb.GetPicksReques
 		if p.ProspectID != nil {
 			pId = p.ProspectID.String()
 		}
+
+		pInRound := ""
+		if p.DraftPickInRound != nil {
+			pInRound = *p.DraftPickInRound
+		}
+
+		pOverall := ""
+		if p.DraftPickOverall != nil {
+			pOverall = *p.DraftPickOverall
+		}
+
 		picksRes = append(picksRes, &pb.Pick{
 			ID:               p.ID.String(),
 			DraftYear:        p.DraftYear,
 			DraftRound:       p.DraftRound,
-			DraftPickInRound: p.DraftPickInRound,
-			DraftPickOverall: p.DraftPickOverall,
+			DraftPickInRound: pInRound,
+			DraftPickOverall: pOverall,
 			ProspectID:       pId,
 			OwnerID:          p.OwnerID.String(),
 			OwnerName:        p.OwnerName,
@@ -175,8 +202,6 @@ func (s *Server) GetPicksByFranchise(ctx context.Context, req *pb.GetPicksReques
 			OriginName:       p.OriginName,
 		})
 	}
-
-	logrus.Info(fmt.Sprintf("-> %+v", picksRes))
 
 	return &pb.GetPicksResponse{
 		Status: http.StatusOK,

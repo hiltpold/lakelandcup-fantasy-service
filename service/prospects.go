@@ -50,7 +50,17 @@ func (s *Server) GetProspectsByFranchise(ctx context.Context, req *pb.GetFranchi
 			} else {
 				protected = "no"
 			}
-			logrus.Info(p.Pick)
+
+			pInRound := ""
+			if p.Pick.DraftPickInRound != nil {
+				pInRound = *p.Pick.DraftPickInRound
+			}
+
+			pOverall := ""
+			if p.Pick.DraftPickOverall != nil {
+				pOverall = *p.Pick.DraftPickOverall
+			}
+
 			prospectsRes = append(prospectsRes, &pb.Prospect{
 				ID:          p.ID.String(),
 				FullName:    p.FullName,
@@ -58,7 +68,7 @@ func (s *Server) GetProspectsByFranchise(ctx context.Context, req *pb.GetFranchi
 				LastName:    p.LastName,
 				NhlTeam:     p.NhlTeam,
 				FranchiseID: prospectId,
-				Pick:        &pb.Pick{ID: pickId, DraftYear: p.Pick.DraftYear, DraftRound: p.Pick.DraftRound, DraftPickInRound: p.Pick.DraftPickInRound, DraftPickOverall: p.Pick.DraftPickOverall},
+				Pick:        &pb.Pick{ID: pickId, DraftYear: p.Pick.DraftYear, DraftRound: p.Pick.DraftRound, DraftPickInRound: pInRound, DraftPickOverall: pOverall},
 				Protected:   protected,
 				Birthdate:   p.Birthdate,
 			})
@@ -127,19 +137,6 @@ func (s *Server) UndraftProspect(ctx context.Context, req *pb.DraftRequest) (*pb
 
 		}
 
-		// update both
-		/*
-			// this syntax does not work
-			updateProspect := tx.Model(&models.Prospect{}).Where(&models.Prospect{ID: prospectId}).Updates(models.Prospect{LeagueID: nil, FranchiseID: nil, Pick: nil})
-			if updateProspect.Error != nil {
-				return updateProspect.Error
-			}
-			updatePick := tx.Model(&models.Pick{}).Where(&models.Pick{ID: pickId}).Updates(models.Pick{ProspectID: nil})
-			if updatePick.Error != nil {
-				return updatePick.Error
-			}
-		*/
-
 		prospect.LeagueID = nil
 		prospect.FranchiseID = nil
 		prospect.Pick = nil
@@ -197,9 +194,15 @@ func (s *Server) DraftProspect(ctx context.Context, req *pb.DraftRequest) (*pb.D
 
 		// pick
 		findPick := tx.Model(&pick).Where(&models.Pick{ID: pickId}).First(&pick)
+
 		logrus.Info(fmt.Sprintf("%v", pick))
+
 		if findPick.Error != nil {
 			return findPick.Error
+		}
+
+		if pick.DraftPickInRound == nil || pick.DraftPickOverall == nil {
+			return fmt.Errorf("could not draft prospect. PickInRound and PickOverall must be set")
 		}
 
 		if findPick.RowsAffected == 0 {
@@ -313,12 +316,23 @@ func (s *Server) TextSearchProspects(ctx context.Context, req *pb.TextSearchRequ
 		s.R.DB.Model(&p).Preload("Pick").Where(&models.Prospect{ID: p.ID}).First(&p)
 		pick := pb.Pick{}
 		if p.Pick != nil {
+
+			pInRound := ""
+			if p.Pick.DraftPickInRound != nil {
+				pInRound = *p.Pick.DraftPickInRound
+			}
+
+			pOverall := ""
+			if p.Pick.DraftPickOverall != nil {
+				pOverall = *p.Pick.DraftPickOverall
+			}
+
 			pick = pb.Pick{
 				ID:               p.Pick.ID.String(),
 				DraftYear:        p.Pick.DraftYear,
 				DraftRound:       p.Pick.DraftRound,
-				DraftPickInRound: p.Pick.DraftPickInRound,
-				DraftPickOverall: p.Pick.DraftPickOverall,
+				DraftPickInRound: pInRound,
+				DraftPickOverall: pOverall,
 				ProspectID:       p.Pick.ProspectID.String(),
 			}
 		}

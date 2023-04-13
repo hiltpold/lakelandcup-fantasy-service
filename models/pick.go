@@ -11,8 +11,8 @@ type Pick struct {
 	ID               uuid.UUID  `json:"id" gorm:"primaryKey"`
 	DraftYear        string     `json:"draftYear" gorm:"type:integer"`
 	DraftRound       string     `json:"draftRound" gorm:"type:integer"`
-	DraftPickOverall string     `json:"draftPickOverall" gorm:"type:integer"`
-	DraftPickInRound string     `json:"draftPickInRound" gorm:"type:integer"`
+	DraftPickOverall *string    `json:"draftPickOverall" gorm:"type:integer;default:null"`
+	DraftPickInRound *string    `json:"draftPickInRound" gorm:"type:integer;default:null"`
 	ProspectID       *uuid.UUID `json:"prospectID" gorm:"foreignKey:ProspectID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 	OwnerID          *uuid.UUID `json:"ownerID" gorm:"foreignKey:FranchiseID;constraint:OnUpdate:CASCADE;OnDelete:SET NULL"`
 	OwnerName        string     `json:"ownerName"`
